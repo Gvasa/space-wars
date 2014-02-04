@@ -1,8 +1,6 @@
 space-wars
 ==========
 
-Kandidat
-
 How to
 ------
 
