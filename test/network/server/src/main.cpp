@@ -6,7 +6,6 @@
 
 int main(int argc, char const *argv[])
 {
-  //Hej
   if (enet_initialize () != 0)
     {
         return EXIT_FAILURE;
