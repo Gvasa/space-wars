@@ -1,0 +1,14 @@
+# pkg-config source file
+
+prefix=D:/bin/osg/OpenSceneGraph-3.0.1-MinGW
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: openscenegraph-osgWidget
+Description: Windowing toolkit library for Openscenegraph
+Version: 3.0.1
+Requires: openscenegraph-osgText openscenegraph-osgViewer openscenegraph-osgDB openscenegraph-osgGA openscenegraph-osg openthreads
+Conflicts:
+Libs: -L${libdir} -losgWidget
+Cflags: -I${includedir}

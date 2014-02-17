@@ -1,64 +1,26 @@
-# Compiler:
+# Select compiler.
 CC = g++
 
-# Flags:
-# -Wall -pedantic
-CFLAGS = -O3
+# Get current directory.
+SELF_DIR = $(dir $(lastword $(MAKEFILE_LIST)))
 
-# More flags:
-ifeq ($(OS), Windows_NT)
-	FRAMEWORKS = -lsgct -lopengl32 -lglu32 -lgdi32 -lws2_32 -static-libgcc -static-libstdc++
-else
-	FRAMEWORKS = -lsgct -framework Opengl -framework Cocoa -framework IOKit -stdlib=libstdc++
-endif
+# Set output name.
+BINNAME = main.exe
 
-# Even more flags:
-ifeq ($(OS), Windows_NT)
-	MKDIR = 
-	LIBFOLD = -L"C:\sgct\lib\mingw"
-	INCFOLD = -I"C:\sgct\include"
-else
-	MKDIR = mkdir -p bin
-	LIBFOLD = -L"/usr/local/lib"
-	INCFOLD = -I"/usr/local/include"
-endif
+# Set output directory.
+BINDIR = bin/
 
-# Files:
-FILES = $(wildcard src/*.cpp)
+# Specify files to compile.
+SRCDIR = $(wildcard src/*.cpp)
 
-# Binary folder:
-BINFOLD = bin/
+# Set lib directory.
+LIBDIR = -L"$(SELF_DIR)lib"
 
-# Binary name:
-ifeq ($(OS), Windows_NT)
-	BINNAME = main.exe
-else
-	BINNAME = main
-endif
+# Set include directory
+INCDIR = -I"$(SELF_DIR)include" -I"$(SELF_DIR)include/Bullet"
 
-ifeq ($(OS), Windows_NT)
-	FOO = this is windows
-else
-	FOO = this is not windows
-endif
+# Specify libraries.
+LIBRARIES = -lenet  -lwinmm -lBulletDynamics -lBulletCollision -lLinearMath -lBulletSoftBody -losg -losgUtil -losgDB -losgGA -losgViewer -lsgct -lopengl32 -lglu32 -lgdi32 -lws2_32
 
-
-all: compile
-.PHONY: all
-
-compile: $(FILES)
-	$(MAKEDIR)
-	$(CC) $(CFLAGS) $(FILES) -o $(BINFOLD)$(BINNAME) $(LIBFOLD) $(INCFOLD) $(FRAMEWORKS)
-.PHONY: compile
-
-run:
-	./$(BINFOLD)$(BINNAME) -config "configs/single.xml"
-.PHONY: run
-
-talk:
-	$(FOO)
-.PHONY: run
-
-clean:
-	rm -f $(BINFOLD)*
-.PHONY: clean
+compile: $(SRCDIR)
+	$(CC) $(SRCDIR) -o $(BINDIR)$(BINNAME) $(LIBDIR) $(INCDIR) $(LIBRARIES)
