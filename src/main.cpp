@@ -51,8 +51,8 @@ void myDrawFun()
 		glColor3f(0.0f, 1.0f, 0.0f); //Green
 		glVertex3f(0.0f, 0.5f, 0.0f);
 
-		glColor3f(0.0f, 0.0f, 1.0f); //Blue
-		glVertex3f(0.5f, -0.5f, 0.0f);
+		glColor3f(0.0f, 10.0f, 1.0f); //Blue
+		glVertex3f(0.1f, -0.1f, 0.0f);
 	glEnd();
 }
 
