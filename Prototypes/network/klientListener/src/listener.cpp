@@ -4,21 +4,16 @@
 #include <thread>
 
 
-void hej()
-{
-  std::cout << "HEJ" << std::endl;
-}
-
 int main(int argc, char const *argv[])
 {
-  std::thread t1(hej);
+
 
   if (enet_initialize () != 0)
     {
         return EXIT_FAILURE;
     }
   atexit(enet_deinitialize);
-//F:\Software\MinGW\bin
+
   ENetAddress address;
   ENetHost* client;
   ENetPeer* peer;
@@ -84,6 +79,5 @@ int main(int argc, char const *argv[])
   std::cout << "5 sek har gått på client" << std::endl;
 
   enet_host_destroy(client);
-  t1.join();
-  return 0;
+   return 0;
 }

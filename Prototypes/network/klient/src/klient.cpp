@@ -70,9 +70,12 @@ int main(int argc, char const *argv[])
 
       ENetPacket* packet = enet_packet_create(message.c_str(), message.length() + 1, ENET_PACKET_FLAG_RELIABLE);
       enet_peer_send(peer, 0, packet);
+
+      std::cout << "ping: " << peer->roundTripTime << " ms" << std::endl;
   }
   std::cout << "5 sek har gått på client" << std::endl;
 
   enet_host_destroy(client);
   return 0;
 }
+  
