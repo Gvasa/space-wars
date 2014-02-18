@@ -1,7 +1,10 @@
 #include <iostream>
 #include <string>
-#include "../include/enet/enet.h"
+#include <vector>
+
+#include "enet/enet.h"
 #include <sstream>
+#include <glm/glm.hpp>
 
 void sendToAll(const ENetHost* server)
 {
@@ -15,8 +18,23 @@ void sendToAll(const ENetHost* server)
 
 }
 
+glm::vec3 updatePosition(ENetPacket* packet)
+{
+  glm::vec3* position = (glm::vec3*) packet->data;
+  std::cout << "x: " << position->x << std::endl;
+  std::cout << "y: " << position->y << std::endl;
+  std::cout << "z: " << position->z << std::endl;
+}
+
+void sendPosition(ENetPeer* peer, glm::vec3 position)
+{
+  ENetPacket* packet = enet_packet_create(&position, sizeof(glm::vec3), ENET_PACKET_FLAG_RELIABLE);
+  enet_peer_send(peer, 0, packet);
+}
+
 int main(int argc, char const *argv[])
 {
+  std::vector<glm::vec3> playerPositions;
   bool shouldSend = false;
   if (enet_initialize () != 0)
     {
@@ -48,15 +66,21 @@ int main(int argc, char const *argv[])
         case ENET_EVENT_TYPE_CONNECT:
             std::cout << "Connection from " << event.peer->address.host << std::endl;
             std::cout << "peerCount:  " << server->connectedPeers << std::endl;
+            playerPositions.push_back(glm::vec3(0,0,0));
          
      
-          
-
       break;
 
         case ENET_EVENT_TYPE_RECEIVE:
-          std::cout << "Message: " << event.packet->data << std::endl;
-         sendToAll(server);
+        // glm::vec3* hej = event.packet->data;
+        for (int i = 0; i < server->connectedPeers; i++)
+        {
+          if (&server->peers[i] == event.peer)
+          {
+            playerPositions[i] = updatePosition(event.packet);
+          }
+        }
+        //sendToAll(server);
          // enet_peer_send(event.peer, 0, packet);
          // std::cout << "peerCount:  " << server->connectedPeers << std::endl;
          // int peerNr;
@@ -84,6 +108,14 @@ int main(int argc, char const *argv[])
 
         case ENET_EVENT_TYPE_DISCONNECT:
           std::cout << "Disconnected: " << event.peer->data;
+          for (int i = 0; i < server->connectedPeers; i++)
+          {
+            if (&server->peers[i] == event.peer)
+            {
+              playerPositions.erase(playerPositions.begin() + i);
+            }
+          }
+
           event.peer->data = NULL;
           std::cout << "peerCount:  " << server->connectedPeers << std::endl;
           break;
@@ -98,7 +130,7 @@ int main(int argc, char const *argv[])
     
   }
    
-  std::cout << "5 sek har gått på serv" << std::endl;
+  // std::cout << "5 sek har gått på serv" << std::endl;
 
   enet_host_destroy(server);
   

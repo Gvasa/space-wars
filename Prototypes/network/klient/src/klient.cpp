@@ -6,11 +6,6 @@
 int main(int argc, char const *argv[])
 {
 
-  if (enet_initialize () != 0)
-    {
-        return EXIT_FAILURE;
-    }
-  atexit(enet_deinitialize);
 //F:\Software\MinGW\bin
   ENetAddress address;
   ENetHost* client;
@@ -60,7 +55,6 @@ int main(int argc, char const *argv[])
         std::cout << "Disconnected from serv: " << event.peer->data << std::endl;
         event.peer->data = NULL;
         break;
-
       }
       
 
@@ -68,10 +62,10 @@ int main(int argc, char const *argv[])
 
     message = "HEJ SERVERHAH!";
 
-      ENetPacket* packet = enet_packet_create(message.c_str(), message.length() + 1, ENET_PACKET_FLAG_RELIABLE);
-      enet_peer_send(peer, 0, packet);
+    ENetPacket* packet = enet_packet_create(message.c_str(), message.length() + 1, ENET_PACKET_FLAG_RELIABLE);
+    enet_peer_send(peer, 0, packet);
 
-      std::cout << "ping: " << peer->roundTripTime << " ms" << std::endl;
+    std::cout << "ping: " << peer->roundTripTime << " ms" << std::endl;
   }
   std::cout << "5 sek har gått på client" << std::endl;
 
