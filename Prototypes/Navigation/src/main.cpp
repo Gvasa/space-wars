@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 sgct::Engine * gEngine;
 
@@ -105,6 +106,12 @@ void myPreSyncFun()
 {
 	if( gEngine->isMaster() )
 	{
+		int width, height;
+		width = gEngine->getActiveXResolution();
+		height = gEngine->getActiveYResolution();
+
+		//std::cout << "Bredd: " << width << " Höjd: " << height << std::endl;
+
 		// if( mouseLeftButton )
 		// {
 			//double tmpYPos;
@@ -113,8 +120,8 @@ void myPreSyncFun()
 			// mouseDx = mouseXPos[0] - mouseXPos[1];
 			// mouseDy = mouseYPos[0] - mouseYPos[1];
 
-			mouseDx = mouseXPos[0] - 960/2;
-			mouseDy = mouseYPos[0] - 540/2;
+			mouseDx = mouseXPos[0] - width/2; //960
+			mouseDy = mouseYPos[0] - height/2; //540
 		// }
 		// else
 		// {
@@ -123,7 +130,7 @@ void myPreSyncFun()
 		// }
 
 
-		sgct::Engine::setMousePos( gEngine->getFocusedWindowIndex(), 960/2, 540/2);
+		sgct::Engine::setMousePos( gEngine->getFocusedWindowIndex(), width/2, height/2); //960, 540
 
 		static float panRot = 0.0f;
 		panRot += (static_cast<float>(mouseDx) * rotationSpeed * static_cast<float>(gEngine->getDt()));
