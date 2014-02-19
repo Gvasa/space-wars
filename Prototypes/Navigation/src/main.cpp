@@ -18,7 +18,7 @@ void mouseButtonCallback(int button, int action);
 void drawXZGrid(int size, float yPos);
 void drawPyramid(float width);
 
-float rotationSpeed = 0.3f;
+float rotationSpeed = 1.0f;
 float walkingSpeed = 2.5f;
 
 GLuint myLandscapeDisplayList = 0;
@@ -147,8 +147,10 @@ void myPreSyncFun()
 			glm::mat4(1.0f),
 			vertRot,
 			glm::vec3(1.0f, 0.0f, 0.0f)); //rotation around the x-axis
+			
+		ViewMat = ViewRoateY*ViewRotateX;	
 
-		view = glm::inverse(glm::mat3(ViewRotateX)) * glm::vec3(0.0f, 0.0f, 1.0f);
+		view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
 
 
 		glm::vec3 right = glm::cross(view, up);
@@ -179,7 +181,7 @@ void myPreSyncFun()
 		glm::mat4 result;
 		result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
 		//2. apply transformation
-		result *= (ViewRotateY * ViewRotateX *  glm::translate( glm::mat4(1.0f), pos ));
+		result *= (ViewMat *  glm::translate( glm::mat4(1.0f), pos ));
 		//1. transform user to coordinate system origin
 		result *= glm::translate( glm::mat4(1.0f), -sgct::Engine::getUserPtr()->getPos() );
 
