@@ -19,14 +19,15 @@ void drawXZGrid(int size, float yPos);
 void drawPyramid(float width);
 
 float rotationSpeed = 1.0f;
+float rollSpeed = 50.0f;
 float walkingSpeed = 2.5f;
 
 GLuint myLandscapeDisplayList = 0;
-const int landscapeSize = 50;
+const int landscapeSize = 100;
 const int numberOfPyramids = 150;
 
-bool arrowButtons[4];
-enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT };
+bool arrowButtons[6];
+enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT, ROLL_RIGHT, ROLL_LEFT};
 
 //to check if left mouse button is pressed
 bool mouseLeftButton = false;
@@ -136,6 +137,12 @@ void myPreSyncFun()
 		panRot += (static_cast<float>(mouseDx) * rotationSpeed * static_cast<float>(gEngine->getDt()));
 		static float vertRot = 0.0f;
 		vertRot += (static_cast<float>(mouseDy) * rotationSpeed * static_cast<float>(gEngine->getDt()));
+		
+		static float rollRot = 0.0f;
+		if( arrowButtons[ROLL_RIGHT] )
+			rollRot += (rollSpeed * static_cast<float>(gEngine->getDt()));
+		if( arrowButtons[ROLL_LEFT] )
+			rollRot -= (rollSpeed * static_cast<float>(gEngine->getDt()));
 
 
 		glm::mat4 ViewRotateX = glm::rotate(
@@ -148,8 +155,14 @@ void myPreSyncFun()
 			vertRot,
 			glm::vec3(1.0f, 0.0f, 0.0f)); //rotation around the x-axis
 			
-		ViewMat = ViewRoateY*ViewRotateX;	
-
+		glm::mat4 ViewRotateZ = glm::rotate(
+			glm::mat4(1.0f),
+			rollRot,
+			glm::vec3(0.0f, 0.0f, 1.0f));
+			
+			
+		glm::mat4 ViewMat = ViewRotateZ * ViewRotateY * ViewRotateX;	
+		//glm::mat4 ViewMat = ViewRotateY * ViewRotateX;
 		view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
 
 
@@ -163,6 +176,7 @@ void myPreSyncFun()
 			pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
 		if( arrowButtons[RIGHT] )
 			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+		
 
 		/*
 			To get a first person camera, the world needs
@@ -229,6 +243,16 @@ void keyCallback(int key, int action)
 		case SGCT_KEY_RIGHT:
 		case SGCT_KEY_D:
 			arrowButtons[RIGHT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+			break;
+			
+		
+		case SGCT_KEY_Q:
+			arrowButtons[ROLL_LEFT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+			break;
+			
+		
+		case SGCT_KEY_E:
+			arrowButtons[ROLL_RIGHT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
 			break;
 		}
 	}
