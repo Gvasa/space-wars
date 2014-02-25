@@ -26,7 +26,6 @@ void myDecodeFun();
 void myCleanUpFun();
 void keyCallback(int key, int action);
 void setupLightSource();
-void drawXZGrid(int size, float yPos);
 
 void initOSG();
  
@@ -42,10 +41,10 @@ std::mutex posMutex;
 std::mutex startMutex;
 bool turnOfNetwork = false;
 bool shouldStart = false;
- 
-float rotationSpeed = 1.0f;
-float rollSpeed = 50.0f;
-float walkingSpeed = 2.5f;
+glm::vec3 playerPositions[10];
+int numberOfPlayers = 0;
+int myPlayerNumber = 0;
+osg::Geode* playerBoxes[10];
  
 GLuint myLandscapeDisplayList = 0;
 const int landscapeSize = 100;
@@ -61,19 +60,32 @@ bool mouseLeftButton = false;
 double mouseDx = 0.0;
 double mouseDy = 0.0;
 /* Stores the positions that will be compared to measure the difference. */
-double mouseXPos[] = { 0.0, 0.0 };
-double mouseYPos[] = { 0.0, 0.0 };
+double mouseXPos = 0;
+double mouseYPos = 0;
  
-glm::vec3 view(0.0f, 0.0f, 1.0f);
-glm::vec3 up(0.0f, 1.0f, 0.0f);
-glm::vec3 pos(0.0f, 0.0f, 0.0f);
+glm::vec3 position = glm::vec3( 0, 0, 0 );
+float horizontalAngle = 3.14f;
+float verticalAngle = 0.0f;
+float speed = 3.0f;
+float mouseSpeed = 0.5f;
  
 sgct::SharedObject<glm::mat4> xform;
  
 int main( int argc, char* argv[] )
 {
   std::thread networkThread(network);
+  while(true)
+  {
+    startMutex.lock();
+    if (shouldStart)
+    {
+      startMutex.unlock();
+      break;
+    }
  
+    startMutex.unlock();
+  }
+
   // Allocate
   gEngine = new sgct::Engine( argc, argv );
  
@@ -100,18 +112,6 @@ int main( int argc, char* argv[] )
   gEngine->getActiveWindowPtr()->setNumberOfAASamples(16);
   gEngine->setWireframe(false);
  
- 
-  // while(true)
-  // {
-  //   startMutex.lock();
-  //   if (shouldStart)
-  //   {
-  //     startMutex.unlock();
-  //     break;
-  //   }
- 
-  //   startMutex.unlock();
-  // }
  
   // Main loop
   gEngine->render();
@@ -159,6 +159,9 @@ void myInitOGLFun()
     gridShapesGeode->addDrawable(gridCubeDrawable);
     mRootNode->addChild(gridShapesGeode);
   }
+
+  
+  
  
   setupLightSource();
  
@@ -219,91 +222,51 @@ void myPreSyncFun()
     width = gEngine->getActiveXResolution();
     height = gEngine->getActiveYResolution();
  
-    sgct::Engine::getMousePos( gEngine->getFocusedWindowIndex(), &mouseXPos[0], &mouseYPos[0] );
-    mouseDx = mouseXPos[0] - width/2;
-    mouseDy = mouseYPos[0] - height/2;
+    sgct::Engine::getMousePos( gEngine->getFocusedWindowIndex(), &mouseXPos, &mouseYPos);
+    mouseDx = mouseXPos - width/2;
+    mouseDy = mouseYPos - height/2;
  
     sgct::Engine::setMousePos( gEngine->getFocusedWindowIndex(), width/2, height/2);
- 
-    static float panRot = 0.0f;
-    panRot += (static_cast<float>(mouseDx) * rotationSpeed * static_cast<float>(gEngine->getDt()));
-    static float vertRot = 0.0f;
-    vertRot += (static_cast<float>(mouseDy) * rotationSpeed * static_cast<float>(gEngine->getDt()));
- 
-    static float rollRot = 0.0f;
-    if( arrowButtons[ROLL_RIGHT] )
-      rollRot += (rollSpeed * static_cast<float>(gEngine->getDt()));
-    if( arrowButtons[ROLL_LEFT] )
-      rollRot -= (rollSpeed * static_cast<float>(gEngine->getDt()));
- 
-    // std::cout << rollRot << std::endl;
- 
-    glm::mat4 ViewRotateX = glm::rotate(
-      glm::mat4(1.0f),
-      panRot,
-      glm::vec3(0.0f, 1.0f, 0.0f)); //rotation around the y-axis
- 
-    glm::mat4 ViewRotateY = glm::rotate(
-      glm::mat4(1.0f),
-      vertRot,
-      glm::vec3(1.0f, 0.0f, 0.0f)); //rotation around the x-axis
- 
-    glm::mat4 ViewRotateZ = glm::rotate(
-      glm::mat4(1.0f),
-      rollRot,
-      glm::vec3(0.0f, 0.0f, 1.0f));
- 
- 
-    glm::mat4 ViewMat = ViewRotateZ * ViewRotateY * ViewRotateX;
- 
-    view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
- 
-    glm::vec4 up4 = ViewRotateZ * ViewRotateY *  glm::vec4(up, 1.0f);
-    glm::vec3 newup = glm::vec3(up4.x/up4.w, up4.y/up4.w, up4.z/up4.w);
- 
-    // glm::vec4 pos4 = ViewRotateZ * ViewRotateX * glm::vec4(pos, 1.0f);
-    // pos = glm::vec3(pos4.x/pos4.w, pos4.y/pos4.w, pos4.z/pos4.w);
- 
-    glm::vec3 right = glm::cross(view, newup);
- 
-    newup = glm::cross(right, view);
- 
-    std::cout << "X: " << newup[0] << "  Y: " << newup[1] << "  Z: " << newup[2] << std::endl;
- 
-    right = glm::cross(view, newup);
- 
- 
+    
+    float deltaTime = gEngine->getDt();
+    horizontalAngle += mouseSpeed * deltaTime * float(width/2 - mouseXPos );
+    verticalAngle   += mouseSpeed * deltaTime * float( height/2 - mouseYPos );
+    
+    glm::vec3 direction(
+    cos(verticalAngle) * sin(horizontalAngle),
+    sin(verticalAngle),
+    cos(verticalAngle) * cos(horizontalAngle) );
+
+    glm::vec3 right = glm::vec3(
+    sin(horizontalAngle - 3.14f/2.0f),
+    0,
+    cos(horizontalAngle - 3.14f/2.0f));
+
+    glm::vec3 up = glm::cross( right, direction );
+
     if( arrowButtons[FORWARD] ){
- 
-      pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
-      view += (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
+      position += direction * deltaTime * speed;
  
     }
  
     if( arrowButtons[BACKWARD] ){
- 
-      pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
-      view -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
+      position -= direction * deltaTime * speed;
  
     }
  
     if( arrowButtons[LEFT] ){
- 
-      pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
-      view -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+      position -= right * deltaTime * speed;
  
     }
  
     if( arrowButtons[RIGHT] ){
- 
-      pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
-      view += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+        position += right * deltaTime * speed;
  
     }
  
  
-    osg::Vec3d vPos(pos.x, pos.y, pos.z);
-    osg::Vec3d vView(view.x, view.y, view.z);
+    osg::Vec3d vPos(position.x, position.y, position.z);
+    osg::Vec3d vView(position.x + direction.x, position.y + direction.y, position.z + direction.z);
     osg::Vec3d vUp(up.x, up.y, up.z);
  
     mViewer->getCamera()->setViewMatrixAsLookAt(vPos, vView, vUp);
@@ -332,6 +295,31 @@ void myDecodeFun()
  
 void myPostSyncPreDrawFun()
 {
+  // for (int i = 0; i < numberOfPlayers; ++i)
+  // {
+  //   playerBoxes[i]->setCenter(osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z));
+  // }
+  std::cout << "Number: " << myPlayerNumber << std::endl;
+  for (int i = 0; i < numberOfPlayers; i++)
+  {
+    // playerBoxes[i] = new osg::Box( osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z), 1.0f);
+    // osg::ShapeDrawable* playerCubeDrawable = new osg::ShapeDrawable(playerBoxes[i]);
+    // osg::Geode* playerShapesGeode = new osg::Geode();
+    // playerShapesGeode->addDrawable(playerCubeDrawable);
+    // mRootNode->addChild(playerShapesGeode);
+    if (i != myPlayerNumber)
+    {
+      mRootNode->removeChild(playerBoxes[i]);
+
+      osg::Sphere* gridCube = new osg::Sphere( osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z), 1);
+      osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
+      playerBoxes[i] = new osg::Geode();
+      playerBoxes[i]->addDrawable(gridCubeDrawable);
+      mRootNode->addChild(playerBoxes[i]);
+    }
+    
+  }
+
   mRootNode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
  
   mFrameStamp->setFrameNumber( gEngine->getCurrentFrameNumber() );
@@ -427,37 +415,15 @@ void setupLightSource()
 }
  
 
-void drawXZGrid(int size, float yPos)
-{
-  glPushMatrix();
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  glTranslatef(0.0f, yPos, 0.0f);
-
-  glLineWidth(3.0f);
-  glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-
-  glBegin( GL_LINES );
-  for(int x = -(size/2); x < (size/2); x++)
-  {
-    glVertex3i(x, 0, -(size/2));
-    glVertex3i(x, 0, (size/2));
-  }
-
-  for(int z = -(size/2); z < (size/2); z++)
-  {
-    glVertex3i(-(size/2), 0, z);
-    glVertex3i((size/2), 0, z);
-  }
-  glEnd();
-
-  glDisable(GL_BLEND);
-  glPopMatrix();
-}
 
 void network()
 {
+
+  for (int i = 0; i < 10; ++i)
+  {
+    playerPositions[i] = glm::vec3(0,0,0);
+  }
+
   ENetAddress address;
   ENetHost* client;
   ENetPeer* peer;
@@ -475,10 +441,10 @@ void network()
  
   client = enet_host_create(NULL, 1, 2, 57600 / 8, 14400 / 8);
  
-  enet_address_set_host(&address, "localhost");
+  enet_address_set_host(&address, "192.168.43.158");
   char hej[10];
   enet_address_get_host(&address, hej, 10);
-  std::cout << hej << std::endl;
+  // std::cout << hej << std::endl;
   address.port = 1234;
  
  
@@ -496,28 +462,33 @@ void network()
  
       case ENET_EVENT_TYPE_RECEIVE:
       {
-          std::cout << "Message from servv: ";
+          // std::cout << "Message from servv: ";
           //enet_peer_disconnect(peer, 3);
           char header[] = {((char*) event.packet->data)[0],
                             ((char*) event.packet->data)[1],
                             ((char*) event.packet->data)[2],
                             ((char*) event.packet->data)[3]};
           int* headerInt = (int*) header;
-          std::cout << *headerInt << std::endl;
+          // std::cout << *headerInt << std::endl;
  
           if (*headerInt == PLAYER_POSITION)
           {
             Package<PLAYER_POSITION_TYPE>* message = (Package<PLAYER_POSITION_TYPE>*) event.packet->data;
-            std::cout << "player: " << message->_player << std::endl;
-            std::cout << "x: " << message->_data.x << std::endl;
-            std::cout << "y: " << message->_data.y << std::endl;
-            std::cout << "z: " << message->_data.z << std::endl;
+            // std::cout << "player: " << message->_player << std::endl;
+            // std::cout << "x: " << message->_data.x << std::endl;
+            // std::cout << "y: " << message->_data.y << std::endl;
+            // std::cout << "z: " << message->_data.z << std::endl;
+            playerPositions[message->_player] = message->_data;
+
           }else if (*headerInt == ASSIGN_PLAYER_NUMBER)
           {
             Package<int>* message = (Package<int>*) event.packet->data;
-            std::cout << "Player number: " << message->_data << std::endl;
+            // std::cout << "Player number: " << message->_data << std::endl;
+            myPlayerNumber = message->_data;
           }else if (*headerInt == START_GAME)
           {
+            Package<int>* message = (Package<int>*) event.packet->data;
+            numberOfPlayers = message->_data;
             startMutex.lock();
             shouldStart = true;
             startMutex.unlock();
@@ -539,7 +510,7 @@ void network()
     }
  
     posMutex.lock();
-    glm::vec3 hej = glm::vec3(1,1,1);
+    glm::vec3 hej = position;
     posMutex.unlock();
     // std::cout << "Position sent: (" << hej.x << ", " << hej.y << ", " << hej.x << ")" << std::endl;
     ENetPacket* packet = enet_packet_create(&hej, sizeof(glm::vec3), ENET_PACKET_FLAG_RELIABLE);
