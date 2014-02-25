@@ -1,9 +1,16 @@
+#include <thread>
+#include <mutex>
+#include <iostream>
+
 #include "sgct.h"
 #include <sgct/SGCTSettings.h>
 #include <osgViewer/Viewer>
 #include <osg/MatrixTransform>
 #include <osg/Shape>
 #include <osg/ShapeDrawable>
+#include "enet/enet.h"
+
+#include "Package.h"
 
 sgct::Engine * gEngine;
 
@@ -25,9 +32,17 @@ osgViewer::Viewer * mViewer;
 osg::ref_ptr<osg::Group> mRootNode;
 osg::ref_ptr<osg::FrameStamp> mFrameStamp;
 
+void network();
+std::mutex offMutex;
+std::mutex posMutex;
+std::mutex startMutex;
+bool turnOfNetwork = false;
+bool shouldStart = false;
+
 int main( int argc, char* argv[] )
 {
-
+  std::thread networkThread(network);
+  
   // Allocate
   gEngine = new sgct::Engine( argc, argv );
 
@@ -41,18 +56,41 @@ int main( int argc, char* argv[] )
   sgct::SharedData::instance()->setEncodeFunction(myEncodeFun);
   sgct::SharedData::instance()->setDecodeFunction(myDecodeFun);
 
+  sgct::SGCTSettings::instance()->setSwapInterval(0);
+  // sgct::SGCTSettings::instance()->setFXAASubPixTrim(1/2);
+
+
   // Init the engine
   if( !gEngine->init() )
   {
     delete gEngine;
     return EXIT_FAILURE;
   }
+  gEngine->getActiveWindowPtr()->setNumberOfAASamples(16);
+
+  
+  // while(true)
+  // {
+  //   startMutex.lock();
+  //   if (shouldStart)
+  //   {
+  //     startMutex.unlock();
+  //     break;
+  //   }
+
+  //   startMutex.unlock();
+  // }
 
   // Main loop
   gEngine->render();
 
   // Clean up (de-allocate)
   delete gEngine;
+
+  offMutex.lock();
+  turnOfNetwork = true;
+  offMutex.unlock();
+  networkThread.join();
 
   // Exit program
   exit( EXIT_SUCCESS );
@@ -193,4 +231,108 @@ void setupLightSource()
 
   mRootNode->addChild( lightSource0 );
   mRootNode->addChild( lightSource1 );
+}
+
+void network()
+{
+  ENetAddress address;
+  ENetHost* client;
+  ENetPeer* peer;
+  std::string message;
+  ENetEvent event;
+  int eventStatus;
+
+  if (enet_initialize () != 0)
+  { 
+      std::cout << "Could not start ENet." << std::endl;
+      return;
+  }else
+    std::cout << "Started ENet." << std::endl; 
+  atexit(enet_deinitialize);
+
+  client = enet_host_create(NULL, 1, 2, 57600 / 8, 14400 / 8);
+
+  enet_address_set_host(&address, "localhost");
+  char hej[10];
+  enet_address_get_host(&address, hej, 10);
+  std::cout << hej << std::endl;
+  address.port = 1234;
+  
+
+  peer = enet_host_connect(client, &address, 2, 0);
+
+  while(true)
+  {
+    while (enet_host_service(client, &event, 10) > 0)
+    {
+      switch (event.type)
+      {
+      case ENET_EVENT_TYPE_CONNECT:
+        std::cout << "We got a new connection " << event.peer->address.host << std::endl;
+        break;
+
+      case ENET_EVENT_TYPE_RECEIVE:
+      {
+          std::cout << "Message from servv: ";
+          //enet_peer_disconnect(peer, 3);
+          char header[] = {((char*) event.packet->data)[0],
+                            ((char*) event.packet->data)[1],
+                            ((char*) event.packet->data)[2],
+                            ((char*) event.packet->data)[3]};
+          int* headerInt = (int*) header;
+          std::cout << *headerInt << std::endl;
+
+          if (*headerInt == PLAYER_POSITION)
+          {
+            Package<PLAYER_POSITION_TYPE>* message = (Package<PLAYER_POSITION_TYPE>*) event.packet->data;
+            std::cout << "player: " << message->_player << std::endl;
+            std::cout << "x: " << message->_data.x << std::endl;
+            std::cout << "y: " << message->_data.y << std::endl;
+            std::cout << "z: " << message->_data.z << std::endl;
+          }else if (*headerInt == ASSIGN_PLAYER_NUMBER)
+          {
+            Package<int>* message = (Package<int>*) event.packet->data;
+            std::cout << "Player number: " << message->_data << std::endl;
+          }else if (*headerInt == START_GAME)
+          {
+            startMutex.lock();
+            shouldStart = true;
+            startMutex.unlock();
+          }
+          
+          // int message = ((char*) event.packet->data)
+          enet_packet_destroy(event.packet);
+        
+        
+
+        break;
+      }
+      case ENET_EVENT_TYPE_DISCONNECT:
+        
+        std::cout << "Disconnected from serv: " << event.peer->data << std::endl;
+        event.peer->data = NULL;
+        break;
+      }
+    }
+
+    posMutex.lock();
+    glm::vec3 hej = glm::vec3(1,1,1);
+    posMutex.unlock();
+    // std::cout << "Position sent: (" << hej.x << ", " << hej.y << ", " << hej.x << ")" << std::endl;
+    ENetPacket* packet = enet_packet_create(&hej, sizeof(glm::vec3), ENET_PACKET_FLAG_RELIABLE);
+    enet_peer_send(peer, 0, packet);
+
+    std::cout << "ping: " << peer->roundTripTime << " ms" << std::endl;
+    offMutex.lock();
+    if (turnOfNetwork)
+    {
+      offMutex.unlock();
+      std::cout << "Network recived shoudown command." << std::endl;
+      break;
+    }else
+      offMutex.unlock();
+  }
+  std::cout << "Turning of network." << std::endl;
+
+  enet_host_destroy(client);
 }

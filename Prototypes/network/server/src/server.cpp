@@ -6,16 +6,23 @@
 #include <sstream>
 #include <glm/glm.hpp>
 
+#include "Package.h"
+
 void sendToAll(const ENetHost* server)
 {
-  std::cout << "Sending to klient: " << std::endl;
-  std::string message = "hej";
-  ENetPacket* packet = enet_packet_create(message.c_str(), message.length() + 1, ENET_PACKET_FLAG_RELIABLE);
-  for (int i = 0; i < server->connectedPeers; ++i)
-  {
-    enet_peer_send(&server->peers[i], 0, packet);
-  }
+  // std::cout << "Sending to klient: " << std::endl;
+  // std::string message = "hej";
+  // ENetPacket* packet = enet_packet_create(message.c_str(), message.length() + 1, ENET_PACKET_FLAG_RELIABLE);
+  
+  // Package<glm::vec3> test(PLAYER_POSITION, 1, hej);
+  // ENetPacket* packet = enet_packet_create(&test, sizeof(test), ENET_PACKET_FLAG_RELIABLE);
 
+  // for (int i = 0; i < server->connectedPeers; ++i)
+  // {
+  //   enet_peer_send(&server->peers[i], 0, packet);
+  // }
+
+  // enet_packet_destroy(packet);
 }
 
 glm::vec3 updatePosition(ENetPacket* packet)
@@ -24,12 +31,16 @@ glm::vec3 updatePosition(ENetPacket* packet)
   std::cout << "x: " << position->x << std::endl;
   std::cout << "y: " << position->y << std::endl;
   std::cout << "z: " << position->z << std::endl;
+
+  return *position;
 }
 
-void sendPosition(ENetPeer* peer, glm::vec3 position)
+void sendPosition(ENetPeer* peer, int player, glm::vec3 position)
 {
-  ENetPacket* packet = enet_packet_create(&position, sizeof(glm::vec3), ENET_PACKET_FLAG_RELIABLE);
+  Package<glm::vec3> test(PLAYER_POSITION, player, position);
+  ENetPacket* packet = enet_packet_create(&test, sizeof(test), ENET_PACKET_FLAG_RELIABLE);
   enet_peer_send(peer, 0, packet);
+  // enet_packet_destroy(packet);
 }
 
 int main(int argc, char const *argv[])
@@ -59,17 +70,34 @@ int main(int argc, char const *argv[])
 
   while(true)
   {
-    while (enet_host_service(server, &event, 100) > 0)
+    while (enet_host_service(server, &event, 10) > 0)
     {
       switch (event.type)
       {
         case ENET_EVENT_TYPE_CONNECT:
-            std::cout << "Connection from " << event.peer->address.host << std::endl;
-            std::cout << "peerCount:  " << server->connectedPeers << std::endl;
-            playerPositions.push_back(glm::vec3(0,0,0));
+        {
+
+          std::cout << "Connection from " << event.peer->address.host << std::endl;
+          std::cout << "peerCount:  " << server->connectedPeers << std::endl;
+          playerPositions.push_back(glm::vec3(0,0,0));
          
-     
-      break;
+          Package<int> test(ASSIGN_PLAYER_NUMBER, playerPositions.size()-1, playerPositions.size());
+          ENetPacket* packet = enet_packet_create(&test, sizeof(test), ENET_PACKET_FLAG_RELIABLE);
+          enet_peer_send(event.peer, 0, packet);
+
+          if (server->connectedPeers >= 3)
+          {
+            Package<int> start(START_GAME, -1, server->connectedPeers);
+             ENetPacket* startPacket = enet_packet_create(&start, sizeof(start), ENET_PACKET_FLAG_RELIABLE);
+             for (int i = 0; i < server->connectedPeers; ++i)
+             {
+               enet_peer_send(&server->peers[i], 0, startPacket);
+             }
+            
+          }
+
+         break;
+        }
 
         case ENET_EVENT_TYPE_RECEIVE:
         // glm::vec3* hej = event.packet->data;
@@ -80,7 +108,7 @@ int main(int argc, char const *argv[])
             playerPositions[i] = updatePosition(event.packet);
           }
         }
-        //sendToAll(server);
+        
          // enet_peer_send(event.peer, 0, packet);
          // std::cout << "peerCount:  " << server->connectedPeers << std::endl;
          // int peerNr;
@@ -121,13 +149,24 @@ int main(int argc, char const *argv[])
           break;
 
       }
+
+      for (int i = 0; i < server->connectedPeers; i++)
+      {
+        for (int j = 0; j < playerPositions.size(); ++j)
+        {
+          sendPosition(&server->peers[i], j, playerPositions[j]);
+        }
+      }
+      
+
       // enet_host_flush(server);
       // std::cout << "1 sek har gått på serv" << std::endl;
 
 
     }
 
-    
+    // sendToAll(server);
+
   }
    
   // std::cout << "5 sek har gått på serv" << std::endl;
