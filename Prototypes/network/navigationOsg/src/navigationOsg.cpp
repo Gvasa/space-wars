@@ -1,19 +1,27 @@
+#include "sgct.h"
+#include <iostream>
+#include <string>
+#include "enet/enet.h"
+ 
 #include <thread>
 #include <mutex>
-#include <iostream>
- 
-#include "sgct.h"
-#include <sgct/SGCTSettings.h>
 #include <osgViewer/Viewer>
+#include <osgDB/ReadFile>
 #include <osg/MatrixTransform>
+#include <osg/ComputeBoundsVisitor>
+#include <btBulletDynamicsCommon.h>
+#include <osg/TextureCubeMap>
 #include <osg/Shape>
 #include <osg/ShapeDrawable>
-#include "enet/enet.h"
+#include <osg/Texture2D>
+#include <osg/TexGen>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
  
+#include "skybox.h"
 #include "Package.h"
+#include "NavigationPackage.h"
  
 sgct::Engine * gEngine;
  
@@ -26,7 +34,7 @@ void myDecodeFun();
 void myCleanUpFun();
 void keyCallback(int key, int action);
 void setupLightSource();
-
+ 
 void initOSG();
  
 sgct::SharedDouble curr_time(0.0);
@@ -44,7 +52,11 @@ bool shouldStart = false;
 glm::vec3 playerPositions[10];
 int numberOfPlayers = 0;
 int myPlayerNumber = 0;
-osg::Geode* playerBoxes[10];
+osg::MatrixTransform* playerBoxes[10];
+osg::Matrix toCenter1;
+osg::Matrix toCenter2;
+glm::vec3 direction;
+NavigationPackage navPacks[10];
  
 GLuint myLandscapeDisplayList = 0;
 const int landscapeSize = 100;
@@ -85,7 +97,7 @@ int main( int argc, char* argv[] )
  
     startMutex.unlock();
   }
-
+ 
   // Allocate
   gEngine = new sgct::Engine( argc, argv );
  
@@ -99,7 +111,7 @@ int main( int argc, char* argv[] )
   sgct::SharedData::instance()->setEncodeFunction(myEncodeFun);
   sgct::SharedData::instance()->setDecodeFunction(myDecodeFun);
  
-  sgct::SGCTSettings::instance()->setSwapInterval(0);
+  // sgct::SGCTSettings::instance()->setSwapInterval(0);
   // sgct::SGCTSettings::instance()->setFXAASubPixTrim(1/2);
  
  
@@ -110,7 +122,9 @@ int main( int argc, char* argv[] )
     return EXIT_FAILURE;
   }
   gEngine->getActiveWindowPtr()->setNumberOfAASamples(16);
+  gEngine->setMouseCursorVisibility(gEngine->getFocusedWindowIndex() , false);
   gEngine->setWireframe(false);
+  // gEngine->setNearAndFarClippingPlanes(1.0f,500.0f);
  
  
   // Main loop
@@ -133,24 +147,78 @@ void myInitOGLFun()
 {
   initOSG();
  
-  osg::Box* unitCube = new osg::Box( osg::Vec3(0,0,0), 1.0f);
-  osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
-  osg::Geode* basicShapesGeode = new osg::Geode();
-  basicShapesGeode->addDrawable(unitCubeDrawable);
-  mRootNode->addChild(basicShapesGeode);
-  basicShapesGeode->getOrCreateStateSet()->setMode( GL_CULL_FACE,
-      osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
-
+  osg::ref_ptr<osg::Node> mModel = osgDB::readNodeFile("spaceship_3.3ds");
+ 
+ for (int i = 0; i < numberOfPlayers; ++i)
+ {  
+    if (i != myPlayerNumber)
+    {
+      playerBoxes[i] = new osg::MatrixTransform();
+      playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-90.0f),
+                                            1.0f, 0.0f, 0.0f));
+ 
+      if ( mModel.valid() )
+      {
+        playerBoxes[i]->addChild(mModel.get());
+     
+        osg::ComputeBoundsVisitor cbv;
+        osg::BoundingBox &bb(cbv.getBoundingBox());
+        mModel->accept( cbv );
+     
+        osg::Vec3f tmpVec;
+        tmpVec = bb.center();
+        toCenter1 = osg::Matrix::translate( -tmpVec );
+        toCenter2 = osg::Matrix::scale( 1.0f/bb.radius(), 1.0f/bb.radius(), 1.0f/bb.radius() );
+        playerBoxes[i]->postMult(toCenter1);
+        playerBoxes[i]->postMult(toCenter2);
+      }
+     
+      mRootNode->addChild(playerBoxes[i]);
+    }else
+     std::cout << "Invalid model!" << std::endl;
+   
+ }
+ 
+ 
+ // SkyBox from OSG Cookbook
+ osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+ //gEngine->setNearAndFarClippingPlanes(0.1f,500.0f);
+ geode->addDrawable( new osg::ShapeDrawable(
+       new osg::Sphere(osg::Vec3(), 5.0f)) );
+ 
+  osg::ref_ptr<SkyBox> skybox = new SkyBox;
+  skybox->getOrCreateStateSet()->setTextureAttributeAndModes( 0, new osg::TexGen );
+ /*skybox->setEnvironmentMap( 0,
+       osgDB::readImageFile("BlueChecker.png"), osgDB::readImageFile("OrangeChecker.png"),
+       osgDB::readImageFile("GreenChecker.png"), osgDB::readImageFile("YellowChecker.png"),
+       osgDB::readImageFile("RedChecker.png"), osgDB::readImageFile("PurpleChecker.png") );*/
+  skybox->setEnvironmentMap( 0,
+       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png") );
+  skybox->addChild( geode );
+  mRootNode->addChild( skybox );
+ 
+ 
+  // osg::Box* unitCube = new osg::Box( osg::Vec3(0,0,0), 1.0f);
+  // osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
+  // osg::Geode* basicShapesGeode = new osg::Geode();
+  // basicShapesGeode->addDrawable(unitCubeDrawable);
+  // mRootNode->addChild(basicShapesGeode);
+  // basicShapesGeode->getOrCreateStateSet()->setMode( GL_CULL_FACE,
+  //     osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
+ 
   int size = 100;
   for(int x = -(size/2); x < (size/2); x++)
   {
     osg::Box* gridCube = new osg::Box( osg::Vec3(x,0,0), 0.05, 0.05, size);
     osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
+    gridCubeDrawable->computeBound();
     osg::Geode* gridShapesGeode = new osg::Geode();
     gridShapesGeode->addDrawable(gridCubeDrawable);
     mRootNode->addChild(gridShapesGeode);
   }
-
+ 
   for(int z = -(size/2); z < (size/2); z++)
   {
     osg::Box* gridCube = new osg::Box( osg::Vec3(0,0,z), size, 0.05, 0.05);
@@ -159,9 +227,9 @@ void myInitOGLFun()
     gridShapesGeode->addDrawable(gridCubeDrawable);
     mRootNode->addChild(gridShapesGeode);
   }
-
-  
-  
+ 
+ 
+ 
  
   setupLightSource();
  
@@ -185,7 +253,7 @@ void initOSG()
  
   mViewer->getCamera()->setGraphicsContext(graphicsWindow.get());
  
-  mViewer->getCamera()->setComputeNearFarMode(osgUtil::CullVisitor::DO_NOT_COMPUTE_NEAR_FAR);
+  mViewer->getCamera()->setComputeNearFarMode(osgUtil::CullVisitor::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
   mViewer->getCamera()->setClearColor( osg::Vec4( 0.0f, 0.0f, 0.0f, 0.0f) );
  
   GLbitfield tmpMask = mViewer->getCamera()->getClearMask();
@@ -198,16 +266,16 @@ void initOSG()
 }
  
 void myDrawFun()
-{ 
-
+{
+ 
   const int * curr_vp = gEngine->getActiveViewportPixelCoords();
   mViewer->getCamera()->setViewport(curr_vp[0], curr_vp[1], curr_vp[2], curr_vp[3]);
   mViewer->getCamera()->setProjectionMatrix( osg::Matrix( glm::value_ptr(gEngine->getActiveViewProjectionMatrix() ) ));
-
+ 
   mViewer->renderingTraversals();
-  
-
-
+ 
+ 
+ 
 }
  
 void myPreSyncFun()
@@ -227,23 +295,23 @@ void myPreSyncFun()
     mouseDy = mouseYPos - height/2;
  
     sgct::Engine::setMousePos( gEngine->getFocusedWindowIndex(), width/2, height/2);
-    
+   
     float deltaTime = gEngine->getDt();
     horizontalAngle += mouseSpeed * deltaTime * float(width/2 - mouseXPos );
     verticalAngle   += mouseSpeed * deltaTime * float( height/2 - mouseYPos );
-    
-    glm::vec3 direction(
+   
+    direction = glm::vec3(
     cos(verticalAngle) * sin(horizontalAngle),
     sin(verticalAngle),
     cos(verticalAngle) * cos(horizontalAngle) );
-
+ 
     glm::vec3 right = glm::vec3(
     sin(horizontalAngle - 3.14f/2.0f),
     0,
     cos(horizontalAngle - 3.14f/2.0f));
-
+ 
     glm::vec3 up = glm::cross( right, direction );
-
+ 
     if( arrowButtons[FORWARD] ){
       position += direction * deltaTime * speed;
  
@@ -299,27 +367,68 @@ void myPostSyncPreDrawFun()
   // {
   //   playerBoxes[i]->setCenter(osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z));
   // }
-  std::cout << "Number: " << myPlayerNumber << std::endl;
-  for (int i = 0; i < numberOfPlayers; i++)
+  // std::cout << "Number: " << myPlayerNumber << std::endl;
+  // for (int i = 0; i < numberOfPlayers; i++)
+  // {
+  //   // playerBoxes[i] = new osg::Box( osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z), 1.0f);
+  //   // osg::ShapeDrawable* playerCubeDrawable = new osg::ShapeDrawable(playerBoxes[i]);
+  //   // osg::Geode* playerShapesGeode = new osg::Geode();
+  //   // playerShapesGeode->addDrawable(playerCubeDrawable);
+  //   // mRootNode->addChild(playerShapesGeode);
+  //   if (i != myPlayerNumber)
+  //   {
+  //     mRootNode->removeChild(playerBoxes[i]);
+ 
+  //     osg::Sphere* gridCube = new osg::Sphere( osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z), 1);
+  //     osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
+  //     playerBoxes[i] = new osg::Geode();
+  //     playerBoxes[i]->addDrawable(gridCubeDrawable);
+  //     mRootNode->addChild(playerBoxes[i]);
+  //   }
+   
+  // }
+ 
+  // std::cout << "numberOfPlayers: " << numberOfPlayers << std::endl;
+  // std::cout << "myPlayerNumber: " << myPlayerNumber << std::endl;
+ 
+  for (int i = 0; i < numberOfPlayers; ++i)
   {
-    // playerBoxes[i] = new osg::Box( osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z), 1.0f);
-    // osg::ShapeDrawable* playerCubeDrawable = new osg::ShapeDrawable(playerBoxes[i]);
-    // osg::Geode* playerShapesGeode = new osg::Geode();
-    // playerShapesGeode->addDrawable(playerCubeDrawable);
-    // mRootNode->addChild(playerShapesGeode);
     if (i != myPlayerNumber)
-    {
-      mRootNode->removeChild(playerBoxes[i]);
+    {   
+        float vertAngle = navPacks[i].verticalAngle;
+        float horAngle = navPacks[i].horizontalAngle;
+        glm::vec3 playerPosition = navPacks[i].position;
 
-      osg::Sphere* gridCube = new osg::Sphere( osg::Vec3(playerPositions[i].x, playerPositions[i].y, playerPositions[i].z), 1);
-      osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
-      playerBoxes[i] = new osg::Geode();
-      playerBoxes[i]->addDrawable(gridCubeDrawable);
-      mRootNode->addChild(playerBoxes[i]);
+        glm::vec3 modelDirection = glm::vec3(
+        cos(vertAngle) * sin(horAngle),
+        sin(vertAngle),
+        cos(vertAngle) * cos(horAngle) );
+
+        glm::vec3 right = glm::vec3(
+        sin(horAngle - 3.14f/2.0f),
+        0,
+        cos(horAngle - 3.14f/2.0f));
+ 
+        glm::vec3 up = glm::cross( right, modelDirection );
+
+
+        playerPosition = playerPosition + modelDirection;
+
+        playerBoxes[i]->setMatrix(osg::Matrix());
+        playerBoxes[i]->preMult(osg::Matrix::rotate(horAngle, right.x, right.y, right.z));
+        playerBoxes[i]->preMult(osg::Matrix::rotate(vertAngle, up.x, up.y, up.z));
+        playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-90.0f),
+                                            1.0f, 0.0f, 0.0f));
+        float deltaTime = gEngine->getDt();
+        float tmp = 1;
+      playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(playerPosition.x * tmp, playerPosition.y * tmp, playerPosition.z * tmp)));
+ 
+      playerBoxes[i]->preMult( toCenter1);
+      playerBoxes[i]->preMult( toCenter2);
     }
-    
   }
-
+ 
+ 
   mRootNode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
  
   mFrameStamp->setFrameNumber( gEngine->getCurrentFrameNumber() );
@@ -414,16 +523,17 @@ void setupLightSource()
   mRootNode->addChild( lightSource1 );
 }
  
-
-
+ 
+ 
 void network()
 {
-
+ 
   for (int i = 0; i < 10; ++i)
   {
     playerPositions[i] = glm::vec3(0,0,0);
+    navPacks[i] = NavigationPackage();
   }
-
+ 
   ENetAddress address;
   ENetHost* client;
   ENetPeer* peer;
@@ -441,7 +551,8 @@ void network()
  
   client = enet_host_create(NULL, 1, 2, 57600 / 8, 14400 / 8);
  
-  enet_address_set_host(&address, "192.168.43.158");
+  // enet_address_set_host(&address, "192.168.43.158");
+  enet_address_set_host(&address, "localhost");
   char hej[10];
   enet_address_get_host(&address, hej, 10);
   // std::cout << hej << std::endl;
@@ -479,7 +590,7 @@ void network()
             // std::cout << "y: " << message->_data.y << std::endl;
             // std::cout << "z: " << message->_data.z << std::endl;
             playerPositions[message->_player] = message->_data;
-
+ 
           }else if (*headerInt == ASSIGN_PLAYER_NUMBER)
           {
             Package<int>* message = (Package<int>*) event.packet->data;
@@ -492,6 +603,11 @@ void network()
             startMutex.lock();
             shouldStart = true;
             startMutex.unlock();
+          }else if (*headerInt == NAV_PACK)
+          {
+            Package<NavigationPackage>* message = (Package<NavigationPackage>*) event.packet->data;
+
+            navPacks[message->_player] = message->_data;
           }
          
           // int message = ((char*) event.packet->data)
@@ -510,10 +626,10 @@ void network()
     }
  
     posMutex.lock();
-    glm::vec3 hej = position;
+    NavigationPackage hej(position, verticalAngle, horizontalAngle);
     posMutex.unlock();
     // std::cout << "Position sent: (" << hej.x << ", " << hej.y << ", " << hej.x << ")" << std::endl;
-    ENetPacket* packet = enet_packet_create(&hej, sizeof(glm::vec3), ENET_PACKET_FLAG_RELIABLE);
+    ENetPacket* packet = enet_packet_create(&hej, sizeof(NavigationPackage), ENET_PACKET_FLAG_RELIABLE);
     enet_peer_send(peer, 0, packet);
  
     // std::cout << "ping: " << peer->roundTripTime << " ms" << std::endl;

@@ -5,6 +5,8 @@
 #define PLAYER_POSITION_TYPE glm::vec3
 #define ASSIGN_PLAYER_NUMBER 2
 #define START_GAME 3
+#define VIEW_MATRIX 4
+#define NAV_PACK 5
 
 #include <string>
 
