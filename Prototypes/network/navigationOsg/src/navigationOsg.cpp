@@ -111,7 +111,7 @@ int main( int argc, char* argv[] )
   sgct::SharedData::instance()->setEncodeFunction(myEncodeFun);
   sgct::SharedData::instance()->setDecodeFunction(myDecodeFun);
  
-  // sgct::SGCTSettings::instance()->setSwapInterval(0);
+  sgct::SGCTSettings::instance()->setSwapInterval(0);
   // sgct::SGCTSettings::instance()->setFXAASubPixTrim(1/2);
  
  
@@ -131,7 +131,7 @@ int main( int argc, char* argv[] )
   gEngine->render();
  
   // Clean up (de-allocate)
-  glDeleteLists(myLandscapeDisplayList, 1);
+  // glDeleteLists(myLandscapeDisplayList, 1);
   delete gEngine;
  
   offMutex.lock();
@@ -270,7 +270,7 @@ void myDrawFun()
  
   const int * curr_vp = gEngine->getActiveViewportPixelCoords();
   mViewer->getCamera()->setViewport(curr_vp[0], curr_vp[1], curr_vp[2], curr_vp[3]);
-  mViewer->getCamera()->setProjectionMatrix( osg::Matrix( glm::value_ptr(gEngine->getActiveViewProjectionMatrix() ) ));
+  // mViewer->getCamera()->setProjectionMatrix( osg::Matrix( glm::value_ptr(gEngine->getActiveViewProjectionMatrix() ) ));
  
   mViewer->renderingTraversals();
  
@@ -336,7 +336,8 @@ void myPreSyncFun()
     osg::Vec3d vPos(position.x, position.y, position.z);
     osg::Vec3d vView(position.x + direction.x, position.y + direction.y, position.z + direction.z);
     osg::Vec3d vUp(up.x, up.y, up.z);
- 
+    
+    mViewer->getCamera()->setProjectionMatrixAsPerspective(45, 4/3, 0.1, 500);
     mViewer->getCamera()->setViewMatrixAsLookAt(vPos, vView, vUp);
  
     // glm::mat4 result;
@@ -410,6 +411,7 @@ void myPostSyncPreDrawFun()
         cos(horAngle - 3.14f/2.0f));
  
         glm::vec3 up = glm::cross( right, modelDirection );
+        up *= -1;
 
 
         playerPosition = playerPosition + modelDirection;
@@ -417,11 +419,13 @@ void myPostSyncPreDrawFun()
         playerBoxes[i]->setMatrix(osg::Matrix());
         playerBoxes[i]->preMult(osg::Matrix::rotate(horAngle, right.x, right.y, right.z));
         playerBoxes[i]->preMult(osg::Matrix::rotate(vertAngle, up.x, up.y, up.z));
-        playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-90.0f),
+        playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-270.0f),
                                             1.0f, 0.0f, 0.0f));
         float deltaTime = gEngine->getDt();
-        float tmp = 1;
-      playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(playerPosition.x * tmp, playerPosition.y * tmp, playerPosition.z * tmp)));
+        // float tmp = -1;
+        // playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(modelDirection.x * tmp, modelDirection.y * tmp, modelDirection.z * tmp)));
+      playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(playerPosition.x, playerPosition.y, playerPosition.z)));
+
  
       playerBoxes[i]->preMult( toCenter1);
       playerBoxes[i]->preMult( toCenter2);
