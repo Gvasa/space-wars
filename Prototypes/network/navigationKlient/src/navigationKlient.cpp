@@ -8,6 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "enet/enet.h"
 
+#include "Package.h"
+
 sgct::Engine * gEngine;
 
 void myDrawFun();
@@ -432,12 +434,36 @@ void network()
         break;
 
       case ENET_EVENT_TYPE_RECEIVE:
-        std::cout << "Message from servv: " << event.packet->data << std::endl;
-        //enet_peer_disconnect(peer, 3);
-        enet_packet_destroy(event.packet);
+      {
+          std::cout << "Message from servv: ";
+          //enet_peer_disconnect(peer, 3);
+          char header[] = {((char*) event.packet->data)[0],
+                            ((char*) event.packet->data)[1],
+                            ((char*) event.packet->data)[2],
+                            ((char*) event.packet->data)[3]};
+          int* headerInt = (int*) header;
+          std::cout << *headerInt << std::endl;
+
+          if (*headerInt == PLAYER_POSITION)
+          {
+            Package<PLAYER_POSITION_TYPE>* message = (Package<PLAYER_POSITION_TYPE>*) event.packet->data;
+            std::cout << "player: " << message->_player << std::endl;
+            std::cout << "x: " << message->_data.x << std::endl;
+            std::cout << "y: " << message->_data.y << std::endl;
+            std::cout << "z: " << message->_data.z << std::endl;
+          }else if (*headerInt == ASSIGN_PLAYER_NUMBER)
+          {
+            Package<int>* message = (Package<int>*) event.packet->data;
+            std::cout << "Player number: " << message->_data << std::endl;
+          }
+          
+          // int message = ((char*) event.packet->data)
+          enet_packet_destroy(event.packet);
+        
+        
 
         break;
-
+      }
       case ENET_EVENT_TYPE_DISCONNECT:
         
         std::cout << "Disconnected from serv: " << event.peer->data << std::endl;

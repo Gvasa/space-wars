@@ -147,15 +147,15 @@ void myInitOGLFun()
 {
   initOSG();
  
-  osg::ref_ptr<osg::Node> mModel = osgDB::readNodeFile("spaceship_3.3ds");
+  osg::ref_ptr<osg::Node> mModel = osgDB::readNodeFile("spaceship3_newcenter.3ds");
  
  for (int i = 0; i < numberOfPlayers; ++i)
  {  
     if (i != myPlayerNumber)
     {
       playerBoxes[i] = new osg::MatrixTransform();
-      playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-90.0f),
-                                            1.0f, 0.0f, 0.0f));
+      // playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-90.0f),
+                                            // 1.0f, 0.0f, 0.0f));
  
       if ( mModel.valid() )
       {
@@ -169,8 +169,8 @@ void myInitOGLFun()
         tmpVec = bb.center();
         toCenter1 = osg::Matrix::translate( -tmpVec );
         toCenter2 = osg::Matrix::scale( 1.0f/bb.radius(), 1.0f/bb.radius(), 1.0f/bb.radius() );
-        playerBoxes[i]->postMult(toCenter1);
-        playerBoxes[i]->postMult(toCenter2);
+        // playerBoxes[i]->postMult(toCenter1);
+        // playerBoxes[i]->postMult(toCenter2);
       }
      
       mRootNode->addChild(playerBoxes[i]);
@@ -253,7 +253,7 @@ void initOSG()
  
   mViewer->getCamera()->setGraphicsContext(graphicsWindow.get());
  
-  mViewer->getCamera()->setComputeNearFarMode(osgUtil::CullVisitor::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
+  mViewer->getCamera()->setComputeNearFarMode(osgUtil::CullVisitor::DO_NOT_COMPUTE_NEAR_FAR);
   mViewer->getCamera()->setClearColor( osg::Vec4( 0.0f, 0.0f, 0.0f, 0.0f) );
  
   GLbitfield tmpMask = mViewer->getCamera()->getClearMask();
@@ -414,19 +414,28 @@ void myPostSyncPreDrawFun()
         up *= -1;
 
 
-        playerPosition = playerPosition + modelDirection;
+        glm::vec3 playerPosDir = playerPosition + modelDirection;
 
         playerBoxes[i]->setMatrix(osg::Matrix());
-        playerBoxes[i]->preMult(osg::Matrix::rotate(horAngle, right.x, right.y, right.z));
-        playerBoxes[i]->preMult(osg::Matrix::rotate(vertAngle, up.x, up.y, up.z));
-        playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-270.0f),
-                                            1.0f, 0.0f, 0.0f));
+        
+
+        
         float deltaTime = gEngine->getDt();
         // float tmp = -1;
         // playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(modelDirection.x * tmp, modelDirection.y * tmp, modelDirection.z * tmp)));
-      playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(playerPosition.x, playerPosition.y, playerPosition.z)));
+        playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(playerPosDir.x, playerPosDir.y, playerPosDir.z)));
 
- 
+        // playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(-playerPosition.x, -playerPosition.y, -playerPosition.z)));
+
+        playerBoxes[i]->postMult(osg::Matrix::rotate(horAngle, right.x, right.y, right.z));
+        playerBoxes[i]->postMult(osg::Matrix::rotate(vertAngle, up.x, up.y, up.z));
+
+        // playerBoxes[i]->postMult(osg::Matrix::translate(osg::Vec3(playerPosition.x, playerPosition.y, playerPosition.z)));
+
+
+        
+
+      playerBoxes[i]->preMult(osg::Matrix::rotate(glm::radians(-90.0f), 1.0f, 0.0f, 0.0f));
       playerBoxes[i]->preMult( toCenter1);
       playerBoxes[i]->preMult( toCenter2);
     }

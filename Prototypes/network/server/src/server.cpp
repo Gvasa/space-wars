@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include "Package.h"
+#include "NavigationPackage.h"
 
 void sendToAll(const ENetHost* server)
 {
@@ -35,6 +36,19 @@ glm::vec3 updatePosition(ENetPacket* packet)
   return *position;
 }
 
+NavigationPackage updateNavigation(ENetPacket* packet)
+{
+  NavigationPackage* navigation = (NavigationPackage*) packet->data;
+  return *navigation;
+}
+
+void sendNavigation(ENetPeer* peer, int player, NavigationPackage navigation)
+{
+  Package<NavigationPackage> navPack(NAV_PACK, player, navigation);
+  ENetPacket* packet = enet_packet_create(&navPack, sizeof(navPack), ENET_PACKET_FLAG_RELIABLE);
+  enet_peer_send(peer, 0, packet);
+}
+
 void sendPosition(ENetPeer* peer, int player, glm::vec3 position)
 {
   Package<glm::vec3> test(PLAYER_POSITION, player, position);
@@ -46,6 +60,8 @@ void sendPosition(ENetPeer* peer, int player, glm::vec3 position)
 int main(int argc, char const *argv[])
 {
   std::vector<glm::vec3> playerPositions;
+  std::vector<NavigationPackage> navigationPackages;
+
   bool shouldSend = false;
   if (enet_initialize () != 0)
     {
@@ -80,12 +96,13 @@ int main(int argc, char const *argv[])
           std::cout << "Connection from " << event.peer->address.host << std::endl;
           std::cout << "peerCount:  " << server->connectedPeers << std::endl;
           playerPositions.push_back(glm::vec3(0,0,0));
+          navigationPackages.push_back(NavigationPackage(glm::vec3(0,0,0), 0.0f, 0.0f));
          
-          Package<int> test(ASSIGN_PLAYER_NUMBER, playerPositions.size()-1, playerPositions.size());
+          Package<int> test(ASSIGN_PLAYER_NUMBER, playerPositions.size()-1, playerPositions.size()-1);
           ENetPacket* packet = enet_packet_create(&test, sizeof(test), ENET_PACKET_FLAG_RELIABLE);
           enet_peer_send(event.peer, 0, packet);
 
-          if (server->connectedPeers >= 3)
+          if (server->connectedPeers >= 2)
           {
             Package<int> start(START_GAME, -1, server->connectedPeers);
              ENetPacket* startPacket = enet_packet_create(&start, sizeof(start), ENET_PACKET_FLAG_RELIABLE);
@@ -105,7 +122,8 @@ int main(int argc, char const *argv[])
         {
           if (&server->peers[i] == event.peer)
           {
-            playerPositions[i] = updatePosition(event.packet);
+            //playerPositions[i] = updatePosition(event.packet);
+            navigationPackages[i] = updateNavigation(event.packet);
           }
         }
         
@@ -141,6 +159,7 @@ int main(int argc, char const *argv[])
             if (&server->peers[i] == event.peer)
             {
               playerPositions.erase(playerPositions.begin() + i);
+              navigationPackages.erase(navigationPackages.begin() + i);
             }
           }
 
@@ -154,7 +173,8 @@ int main(int argc, char const *argv[])
       {
         for (int j = 0; j < playerPositions.size(); ++j)
         {
-          sendPosition(&server->peers[i], j, playerPositions[j]);
+          // sendPosition(&server->peers[i], j, playerPositions[j]);
+          sendNavigation(&server->peers[i], j, navigationPackages[j]);
         }
       }
       
