@@ -17,6 +17,8 @@ class Engine
     void passToKeyCallback(const int& key, const int& action);
     void passMousePosition(const double& xPos, const double& yPos);
 
+    void addObject();
+
   private:
     Physics* _physics;
     Renderer* _renderer;

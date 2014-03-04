@@ -23,3 +23,8 @@ void Engine::passMousePosition(const double& xPos, const double& yPos)
 {
   _input->setMousePosition(xPos, yPos);
 }
+
+void Engine::addObject()
+{
+  _renderer->addObject();
+}

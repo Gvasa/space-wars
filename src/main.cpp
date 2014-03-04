@@ -67,7 +67,7 @@ void postSyncPreDraw()
 
 void init()
 {
-
+  _gameEngine->addObject();
 }
 
 void encode()
