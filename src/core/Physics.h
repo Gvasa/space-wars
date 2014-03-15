@@ -9,6 +9,13 @@ class Physics
     Physics();
     ~Physics();
 
+    void setGravity(float x, float y, float z);
+  private:
+    btBroadphaseInterface* _broadphase;
+    btDefaultCollisionConfiguration* _collisionConfiguration;
+    btCollisionDispatcher* _dispatcher;
+    btSequentialImpulseConstraintSolver* _solver;
+    btDiscreteDynamicsWorld* _dynamicsWorld;
 };
 
 #endif
