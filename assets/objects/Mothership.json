@@ -1,0 +1,36 @@
+{
+  "Name": "Motherhip",
+  "HP": 100,
+  "Models": [
+    {
+      "type": "hull",
+      "model": "mothership.3ds",
+      "transform": ""
+    },
+    {
+      "type": "cannon",
+      "model": "cannon.3ds",
+      "transform": ""
+    },
+    {
+      "type": "cannon",
+      "model": "cannon.3ds",
+      "transform": ""
+    },
+    {
+      "type": "megalazer",
+      "model": "lazer.3ds",
+      "transform": ""
+    }
+  ],
+  "collision": [
+    {
+      "type": "sphere",
+      "transform": ""
+    },
+    {
+      "type": "box",
+      "transform": ""
+    }
+  ]
+}
