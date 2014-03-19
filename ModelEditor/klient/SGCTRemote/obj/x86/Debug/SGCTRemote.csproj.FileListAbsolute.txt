@@ -1,0 +1,10 @@
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\bin\Debug\SGCTRemote.exe
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\bin\Debug\SGCTRemote.pdb
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\obj\x86\Debug\SGCTRemote.Form1.resources
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\obj\x86\Debug\SGCTRemote.Properties.Resources.resources
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\obj\x86\Debug\SGCTRemote.csproj.GenerateResource.Cache
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\obj\x86\Debug\SGCTRemote.exe
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\obj\x86\Debug\SGCTRemote.pdb
+C:\Users\ander_000\Desktop\sgctremote\SGCTRemote\obj\x86\Debug\SGCTRemote.csprojResolveAssemblyReference.cache
+C:\Users\ander_000\Documents\Git\Kandidatprojekt\space-wars\ModelEditor\klient\SGCTRemote\obj\x86\Debug\SGCTRemote.exe
+C:\Users\ander_000\Documents\Git\Kandidatprojekt\space-wars\ModelEditor\klient\SGCTRemote\obj\x86\Debug\SGCTRemote.pdb
