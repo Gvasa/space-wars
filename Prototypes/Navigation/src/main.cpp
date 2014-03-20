@@ -161,7 +161,7 @@ void myPreSyncFun()
 			glm::vec3(0.0f, 0.0f, 1.0f));
 			
 			
-		glm::mat4 ViewMat = ViewRotateZ * ViewRotateY * ViewRotateX;	
+		glm::mat4 ViewMat = ViewRotateY * ViewRotateX;	
 		//glm::mat4 ViewMat = ViewRotateY * ViewRotateX;
 		view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
 
@@ -200,6 +200,8 @@ void myPreSyncFun()
 		result *= glm::translate( glm::mat4(1.0f), -sgct::Engine::getUserPtr()->getPos() );
 
 		xform.setVal( result );
+
+
 	}
 }
 

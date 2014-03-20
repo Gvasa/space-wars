@@ -42,6 +42,7 @@ void myEncodeFun();
 void myDecodeFun();
 void myCleanUpFun();
 void keyCallback(int key, int action);
+void printOsgMat(osg::Matrixd tmp);
 
 //other functions
 void initOSG();
@@ -61,16 +62,26 @@ sgct::SharedDouble mousex(0.0);
 sgct::SharedDouble mousey(0.0);
 sgct::SharedDouble mousez(0.0);
 
-osg::Vec3d direction;
-osg::Vec3d right;
-osg::Vec3d up;
+float rotationSpeed = 4.0f;
+float rollSpeed = 50.0f;
+float walkingSpeed = 10.0f;
+
+glm::mat4 result;
+
+
+glm::vec3 view(0.0f, 0.0f, 1.0f);
+glm::vec3 up(0.0f, 1.0f, 0.0f);
+glm::vec3 pos(0.0f, 0.0f, 0.0f);
+
 
 osg::Vec3d x(1.0, 0.0, 0.0);
 osg::Vec3d y(0.0, 1.0, 0.0);
 osg::Vec3d z(0.0, 0.0, 1.0);
 
 
-glm::mat4 xform(1.0f);
+
+sgct::SharedObject<glm::mat4> xform;
+
 
 //other var
 bool arrowButtons[4];
@@ -83,9 +94,10 @@ double verticalAngle = 0.0;
 double mouseDx = 0.0;
 double mouseDy = 0.0;
 
-double mouseXPos = 0.0;
-double mouseYPos = 0.0;
 double temp = 0.0;
+
+double mouseXPos[] = { 0.0, 0.0 };
+double mouseYPos[] = { 0.0, 0.0 };
 
 
 
@@ -142,20 +154,20 @@ void myInitOGLFun()
 
  // SkyBox from OSG Cookbook
  osg::ref_ptr<osg::Geode> geode = new osg::Geode;
- //gEngine->setNearAndFarClippingPlanes(0.1f,500.0f);
+ gEngine->setNearAndFarClippingPlanes(0.1f,1000.0f);
  geode->addDrawable( new osg::ShapeDrawable(
-       new osg::Sphere(osg::Vec3(), 5.0f)) );
+       new osg::Sphere(osg::Vec3(), 990.0f)) );
  
   osg::ref_ptr<SkyBox> skybox = new SkyBox;
   skybox->getOrCreateStateSet()->setTextureAttributeAndModes( 0, new osg::TexGen );
- /*skybox->setEnvironmentMap( 0,
+  skybox->setEnvironmentMap( 0,
        osgDB::readImageFile("BlueChecker.png"), osgDB::readImageFile("OrangeChecker.png"),
        osgDB::readImageFile("GreenChecker.png"), osgDB::readImageFile("YellowChecker.png"),
-       osgDB::readImageFile("RedChecker.png"), osgDB::readImageFile("PurpleChecker.png") );*/
-  skybox->setEnvironmentMap( 0,
-       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
-       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
-       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png") );
+       osgDB::readImageFile("RedChecker.png"), osgDB::readImageFile("PurpleChecker.png") );
+  // skybox->setEnvironmentMap( 0,
+  //      osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+  //      osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+  //      osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png") );
   skybox->addChild( geode );
   mSceneTrans->addChild( skybox );
  
@@ -237,42 +249,61 @@ void myPreSyncFun()
 		width = gEngine->getActiveXResolution();
 		height = gEngine->getActiveYResolution();
 
-		sgct::Engine::getMousePos( gEngine->getFocusedWindowIndex(), &mouseXPos, &mouseYPos);
-		mouseDx = mouseXPos - width/2;
-		mouseDy = mouseYPos - height/2;
+		sgct::Engine::getMousePos( gEngine->getFocusedWindowIndex(), &mouseXPos[0], &mouseYPos[0]);
+		mouseDx = mouseXPos[0] - width/2;
+		mouseDy = mouseYPos[0] - height/2;
 
 		sgct::Engine::setMousePos( gEngine->getFocusedWindowIndex(), width/2, height/2);
 
-		double deltaTime = gEngine->getDt();
-		horizontalAngle -= mouse_speed * deltaTime * double(width/2 - mouseXPos );
-		verticalAngle -= mouse_speed * deltaTime * double(height/2 -mouseYPos );
 
-		std::cout << "H: " << horizontalAngle << " V: " << verticalAngle << std::endl;
-
-		mousex.setVal( cos(verticalAngle) * sin(horizontalAngle) );
-		mousey.setVal( sin(verticalAngle) );
-		mousez.setVal( cos(verticalAngle) * cos(horizontalAngle) );
-
-		// std::cout << mousex.getVal() << " " << mousey.getVal() << " " << mousez.getVal() << std::endl;
-
-		direction = osg::Vec3d(mousex.getVal(), mousey.getVal(), mousez.getVal());
-
-		right = osg::Vec3d( sin(horizontalAngle - 3.14/2.0), 0, cos(horizontalAngle - 3.14/2.0) );
-
-		up = right.operator^(direction);
+		static float panRot = 0.0f;
+		panRot += (static_cast<float>(mouseDx) * rotationSpeed * static_cast<float>(gEngine->getDt()));
+		static float vertRot = 0.0f;
+		vertRot += (static_cast<float>(mouseDy) * rotationSpeed * static_cast<float>(gEngine->getDt()));
+		
 
 
+		glm::mat4 ViewRotateX = glm::rotate(
+			glm::mat4(1.0f),
+			panRot,
+			glm::vec3(0.0f, 1.0f, 0.0f)); //rotation around the y-axis
+
+		glm::mat4 ViewRotateY = glm::rotate(
+			glm::mat4(1.0f),
+			vertRot,
+			glm::vec3(1.0f, 0.0f, 0.0f)); //rotation around the x-axis
+			
+		/*glm::mat4 ViewRotateZ = glm::rotate(
+			glm::mat4(1.0f),
+			rollRot,
+			glm::vec3(0.0f, 0.0f, 1.0f));
+		*/
+
+		glm::mat4 ViewMat = ViewRotateY * ViewRotateX;	
+		view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
 
 
+		glm::vec3 right = glm::cross(view, up);
 
 		if( arrowButtons[FORWARD] )
-			dist.setVal( dist.getVal() + (navigation_speed * gEngine->getDt()));
+			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
 		if( arrowButtons[BACKWARD] )
-			dist.setVal( dist.getVal() - (navigation_speed * gEngine->getDt()));
+			pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
 		if( arrowButtons[LEFT] )
-			sideways.setVal( sideways.getVal() + (navigation_speed * gEngine->getDt()));
+			pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
 		if( arrowButtons[RIGHT] )
-			sideways.setVal( sideways.getVal() - (navigation_speed * gEngine->getDt()));
+			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+		
+		result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
+		//2. apply transformation
+		result *= (ViewMat *  glm::translate( glm::mat4(1.0f), pos ));
+		//1. transform user to coordinate system origin
+		result *= glm::translate( glm::mat4(1.0f), -sgct::Engine::getUserPtr()->getPos() );
+
+		
+		mSceneTrans->setMatrix(osg::Matrixd(glm::value_ptr(result)));
+
+
 	}
 }
 
@@ -288,27 +319,8 @@ void myPostSyncPreDrawFun()
 		takeScreenshot.setVal(false);
 	}
 
-
-
-
 	light.getVal() ? mRootNode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE) :
 		mRootNode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
-
-
-
-
-
-	xform = glm::translate(glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() ) ;
-
-
-	// mSceneTrans->setMatrix(osg::Matrix::rotate( glm::radians(curr_time.getVal() * 8.0), 0.0, 1.0, 0.0));
-	// mSceneTrans->setMatrix(osg::Matrix::rotate( mousex.getVal(), x , mousey.getVal(), y,  mousez.getVal(), z ) );
-	mSceneTrans->setMatrix(osg::Matrix::translate(0.0, 0.0, 0.0));
-	mSceneTrans->postMult(osg::Matrix::rotate(horizontalAngle, 0.0, 1.0, 0.0) );
-	mSceneTrans->postMult(osg::Matrix::rotate(verticalAngle, 1.0, 0.0, 0.0) );
-	mSceneTrans->postMult(osg::Matrix::translate(sideways.getVal(), 0.0, dist.getVal()));
-
-	
 
 	//transform to scene transformation from configuration file
 	mSceneTrans->postMult( osg::Matrix( glm::value_ptr( gEngine->getModelMatrix() ) ));
@@ -353,6 +365,7 @@ void myEncodeFun()
 	sgct::SharedData::instance()->writeBool( &stats );
 	sgct::SharedData::instance()->writeBool( &takeScreenshot );
 	sgct::SharedData::instance()->writeBool( &light );
+
 }
 
 void myDecodeFun()
@@ -369,6 +382,7 @@ void myDecodeFun()
 	sgct::SharedData::instance()->readBool( &stats );
 	sgct::SharedData::instance()->readBool( &takeScreenshot );
 	sgct::SharedData::instance()->readBool( &light );
+
 }
 
 void myCleanUpFun()
@@ -470,4 +484,18 @@ void setupLightSource()
 
 	mRootNode->addChild( lightSource0 );
 	mRootNode->addChild( lightSource1 );
+}
+
+
+void printOsgMat(osg::Matrixd tmp)
+{
+	std::cout << std::endl;    
+    std::cout << std::endl;
+    std::cout << tmp(0,0) << " " << tmp(0,1) << " " << tmp(0,2) << " " << tmp(0,3) << std::endl; 
+    std::cout << tmp(1,0) << " " << tmp(1,1) << " " << tmp(1,2) << " " << tmp(1,3) << std::endl;
+    std::cout << tmp(2,0) << " " << tmp(2,1) << " " << tmp(2,2) << " " << tmp(2,3) << std::endl;
+    std::cout << tmp(3,0) << " " << tmp(3,1) << " " << tmp(3,2) << " " << tmp(3,3) << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
+
 }
