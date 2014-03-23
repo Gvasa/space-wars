@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace SGCTRemote
 {
@@ -19,10 +20,13 @@ namespace SGCTRemote
     
     public partial class Form1 : Form
     {
+        private Data _data;
+
         private clientData c;
 
         public Form1()
         {
+            _data = new Data();
             InitializeComponent();
             init();
         }
@@ -39,6 +43,8 @@ namespace SGCTRemote
             this.ipTextBox.Text = c.ip;
 
             componentVisibility(false);
+            btnAddModel.Enabled = false;
+            lbModels.Enabled = false;
         }
 
         private void exit()
@@ -53,8 +59,8 @@ namespace SGCTRemote
         private void componentVisibility(bool status)
         {
             this.PropertiesGroupBox.Enabled = status;
-            btnAddModel.Enabled = status;
-            lstVModels.Enabled = status;
+            gbObject.Enabled = status;
+            
         }
 
         #region Network
@@ -64,12 +70,11 @@ namespace SGCTRemote
             //if connection successfull
             if (c.connection.ConnectIP(c.ip, c.port, c.bufferSize))
             {
-                componentVisibility(true);
+                //componentVisibility(true);
+                btnAddModel.Enabled = true;
+                lbModels.Enabled = true;
                 this.connectButton.Text = "Disconnect";
                 this.toolStripStatusLabel1.Text = "Connected";
-                
-                //send defaults
-                c.connection.Send("stats=0\r\ngraph=0\r\nwire=0\r\nsize=50");
             }
             else
             {
@@ -116,8 +121,16 @@ namespace SGCTRemote
             }
         }
 
-        private void lstVModels_SelectedIndexChanged(object sender, EventArgs e)
+        private void lbModels_SelectedIndexChanged(object sender, EventArgs e)
         {
+            string curItem = lbModels.SelectedItem.ToString();
+            int index = getSelectedModelIndex();
+            if (index != -1 && c.connection.valid)
+            {
+                c.connection.Send("selectedModel=" + index);
+            }
+
+            updateAllValues();
 
         }
 
@@ -126,9 +139,13 @@ namespace SGCTRemote
             DialogResult result = ofdOpenModel.ShowDialog();
             if (result == DialogResult.OK)
             {
+                componentVisibility(true);
                 string filename = ofdOpenModel.FileName;
-                var item = new ListViewItem(new[] { filename});
-                lstVModels.Items.Add(item);
+
+                _data._models.Add(new Model());
+                _data._models.ElementAt(_data._models.Count-1).setName("Model" + _data._models.Count);
+                _data._models.ElementAt(_data._models.Count-1).setFileName(filename);
+                lbModels.Items.Add(_data._models.ElementAt(_data._models.Count-1).getName());
 
                 if (c.connection.valid)
                 {
@@ -146,37 +163,37 @@ namespace SGCTRemote
 
         private void tbXpos_MouseScroll(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            double tmp = Convert.ToDouble(tbXpos.Text) + Convert.ToDouble(e.Delta) / 200.0;
+            double tmp = (Convert.ToDouble(tbXpos.Text) + Convert.ToDouble(e.Delta));
             tbXpos.Text = tmp.ToString();
         }
 
         private void tbYpos_MouseScroll(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            double tmp = Convert.ToDouble(tbYpos.Text) + Convert.ToDouble(e.Delta) / 200.0;
+            double tmp = Convert.ToDouble(tbYpos.Text) + Convert.ToDouble(e.Delta);
             tbYpos.Text = tmp.ToString();
         }
 
         private void tbZpos_MouseScroll(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            double tmp = Convert.ToDouble(tbZpos.Text) + Convert.ToDouble(e.Delta) / 200.0;
+            double tmp = Convert.ToDouble(tbZpos.Text) + Convert.ToDouble(e.Delta);
             tbZpos.Text = tmp.ToString();
         }
 
         private void tbXrot_MouseScroll(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            double tmp = Convert.ToDouble(tbXrot.Text) + Convert.ToDouble(e.Delta) / 200.0;
+            double tmp = Convert.ToDouble(tbXrot.Text) + Convert.ToDouble(e.Delta);
             tbXrot.Text = tmp.ToString();
         }
 
         private void tbYrot_MouseScroll(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            double tmp = Convert.ToDouble(tbYrot.Text) + Convert.ToDouble(e.Delta) / 200.0;
+            double tmp = Convert.ToDouble(tbYrot.Text) + Convert.ToDouble(e.Delta);
             tbYrot.Text = tmp.ToString();
         }
 
         private void tbZrot_MouseScroll(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            double tmp = Convert.ToDouble(tbZrot.Text) + Convert.ToDouble(e.Delta) / 200.0;
+            double tmp = Convert.ToDouble(tbZrot.Text) + Convert.ToDouble(e.Delta);
             tbZrot.Text = tmp.ToString();
         }
 
@@ -185,11 +202,22 @@ namespace SGCTRemote
             if (c.connection.valid)
             {
                 if (axis == 1)
+                {
                     c.connection.Send("rotationX=" + value);
+                    _data._models.ElementAt(getSelectedModelIndex()).setXrot(value);
+
+                }
                 else if (axis == 2)
+                {
+
                     c.connection.Send("rotationY=" + value);
+                    _data._models.ElementAt(getSelectedModelIndex()).setYrot(value);
+                }
                 else if (axis == 3)
+                {
                     c.connection.Send("rotationZ=" + value);
+                    _data._models.ElementAt(getSelectedModelIndex()).setZrot(value);
+                }
             }
         }
 
@@ -198,11 +226,20 @@ namespace SGCTRemote
             if (c.connection.valid)
             {
                 if (axis == 1)
+                {
                     c.connection.Send("positionX=" + value);
+                    _data._models.ElementAt(getSelectedModelIndex()).setXpos(value);
+                }
                 else if (axis == 2)
+                {
                     c.connection.Send("positionY=" + value);
+                    _data._models.ElementAt(getSelectedModelIndex()).setYpos(value);
+                }
                 else if (axis == 3)
+                {
                     c.connection.Send("positionZ=" + value);
+                    _data._models.ElementAt(getSelectedModelIndex()).setZpos(value);
+                }
             }
         }
 
@@ -253,7 +290,7 @@ namespace SGCTRemote
             try
             {
                 double value = Convert.ToDouble(tbXrot.Text);
-                sendPosition(1, value);
+                sendRotation(1, value);
             }
             catch (FormatException)
             {
@@ -268,7 +305,7 @@ namespace SGCTRemote
             try
             {
                 double value = Convert.ToDouble(tbYrot.Text);
-                sendPosition(2, value);
+                sendRotation(2, value);
             }
             catch (FormatException)
             {
@@ -283,7 +320,7 @@ namespace SGCTRemote
             try
             {
                 double value = Convert.ToDouble(tbZrot.Text);
-                sendPosition(3, value);
+                sendRotation(3, value);
             }
             catch (FormatException)
             {
@@ -293,8 +330,65 @@ namespace SGCTRemote
             }
         }
 
+        private void tbName_TextChanged(object sender, EventArgs e)
+        {
+            Console.WriteLine(tbName.Text);
+            _data._models.ElementAt(getSelectedModelIndex()).setName(tbName.Text);
+            lbModels.SelectedItem = tbName.Text;
 
+        }
 
+        private int getSelectedModelIndex()
+        {
+            string curItem = lbModels.SelectedItem.ToString();
+            return lbModels.FindString(curItem);
+        }
+
+        private void updateAllValues()
+        {
+            tbName.Text = _data._models.ElementAt(getSelectedModelIndex()).getName();
+            tbXpos.Text = _data._models.ElementAt(getSelectedModelIndex()).getXpos().ToString();
+            tbYpos.Text = _data._models.ElementAt(getSelectedModelIndex()).getYpos().ToString();
+            tbZpos.Text = _data._models.ElementAt(getSelectedModelIndex()).getZpos().ToString();
+            tbXrot.Text = _data._models.ElementAt(getSelectedModelIndex()).getXrot().ToString();
+            tbYrot.Text = _data._models.ElementAt(getSelectedModelIndex()).getYrot().ToString();
+            tbZrot.Text = _data._models.ElementAt(getSelectedModelIndex()).getZrot().ToString();
+            cbBase.Checked = _data._models.ElementAt(getSelectedModelIndex()).getIsBase();
+            cbCanon.Checked = _data._models.ElementAt(getSelectedModelIndex()).getIsCanon();
+            
+        }
+
+        private void menuSave_Click(object sender, EventArgs e)
+        {
+            DialogResult result = sfdSaveJson.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                string output = JsonConvert.SerializeObject(_data, Formatting.Indented);
+                System.IO.File.WriteAllText(sfdSaveJson.FileName, output);
+            } 
+        }
+
+        private void tbObjectName_TextChanged(object sender, EventArgs e)
+        {
+            _data.name = tbObjectName.Text;
+        }
+
+        private void tbHp_TextChanged(object sender, EventArgs e)
+        {
+            _data.hp = Convert.ToInt32(tbHp.Text);
+        }
+
+        private void cbBase_CheckedChanged(object sender, EventArgs e)
+        {
+            _data._models.ElementAt(getSelectedModelIndex()).setIsBase(cbBase.Checked);
+        }
+
+        private void cbCanon_CheckedChanged(object sender, EventArgs e)
+        {
+            _data._models.ElementAt(getSelectedModelIndex()).setIsCanon(cbCanon.Checked);
+        }
+
+        
         
 
         

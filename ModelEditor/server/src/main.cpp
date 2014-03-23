@@ -158,7 +158,11 @@ void postSyncPreDraw()
     _modelTransforms.at(selectedModel)->postMult(osg::Matrix::translate( -tmpVec ) );
     _modelTransforms.at(selectedModel)->postMult(osg::Matrix::scale( 1.0f/radius, 1.0f/radius, 1.0f/radius ));
 
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::rotate(rotation.x(), osg::Vec3f(1,0,0)));
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::rotate(rotation.y(), osg::Vec3f(0,1,0)));
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::rotate(rotation.z(), osg::Vec3f(0,0,1)));
     _modelTransforms.at(selectedModel)->postMult(osg::Matrix::translate(translation));
+
   }
 
 
@@ -216,28 +220,33 @@ void clientCallback(const char * receivedChars, int size, int clientId)
     }else if (strncmp(receivedChars, "positionX", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      translation.x() = strToDouble(tmp);
-      // std::cout << translation.x() << std::endl;
+      translation.x() = strToDouble(tmp)/200;
+      
     }else if (strncmp(receivedChars, "positionY", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      translation.y() = strToDouble(tmp);
+      translation.y() = strToDouble(tmp)/200;
     }else if (strncmp(receivedChars, "positionZ", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      translation.z() = strToDouble(tmp);
+      translation.z() = strToDouble(tmp)/200;
     }else if (strncmp(receivedChars, "rotationX", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      rotation.x() = strToDouble(tmp);
+      rotation.x() = strToDouble(tmp)/200;
+      // std::cout << rotation.x() << std::endl;
     }else if (strncmp(receivedChars, "rotationY", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      rotation.y() = strToDouble(tmp);
+      rotation.y() = strToDouble(tmp)/200;
     }else if (strncmp(receivedChars, "rotationZ", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      rotation.z() = strToDouble(tmp);
+      rotation.z() = strToDouble(tmp)/200;
+    }else if (strncmp(receivedChars, "selectedModel", 13) == 0)
+    {
+      std::string tmp(receivedChars + 14, receivedChars + size);
+      selectedModel = strToDouble(tmp);
     }
   }
 }

@@ -51,14 +51,28 @@
             this.lblXpos = new System.Windows.Forms.Label();
             this.lblName = new System.Windows.Forms.Label();
             this.tbName = new System.Windows.Forms.TextBox();
-            this.lstVModels = new System.Windows.Forms.ListView();
+            this.lbModels = new System.Windows.Forms.ListBox();
             this.btnAddModel = new System.Windows.Forms.Button();
             this.ofdOpenModel = new System.Windows.Forms.OpenFileDialog();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.menuFile = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuSave = new System.Windows.Forms.ToolStripMenuItem();
+            this.sfdSaveJson = new System.Windows.Forms.SaveFileDialog();
+            this.printDocument1 = new System.Drawing.Printing.PrintDocument();
+            this.gbObject = new System.Windows.Forms.GroupBox();
+            this.cbBase = new System.Windows.Forms.CheckBox();
+            this.cbCanon = new System.Windows.Forms.CheckBox();
+            this.lblObjectName = new System.Windows.Forms.Label();
+            this.tbObjectName = new System.Windows.Forms.TextBox();
+            this.lblHp = new System.Windows.Forms.Label();
+            this.tbHp = new System.Windows.Forms.TextBox();
             this.statusStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.PropertiesGroupBox.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.gbPosition.SuspendLayout();
+            this.menuStrip1.SuspendLayout();
+            this.gbObject.SuspendLayout();
             this.SuspendLayout();
             // 
             // statusStrip1
@@ -121,16 +135,18 @@
             // 
             // PropertiesGroupBox
             // 
+            this.PropertiesGroupBox.Controls.Add(this.cbCanon);
+            this.PropertiesGroupBox.Controls.Add(this.cbBase);
             this.PropertiesGroupBox.Controls.Add(this.groupBox2);
             this.PropertiesGroupBox.Controls.Add(this.gbPosition);
             this.PropertiesGroupBox.Controls.Add(this.lblName);
             this.PropertiesGroupBox.Controls.Add(this.tbName);
-            this.PropertiesGroupBox.Location = new System.Drawing.Point(145, 66);
+            this.PropertiesGroupBox.Location = new System.Drawing.Point(145, 210);
             this.PropertiesGroupBox.Name = "PropertiesGroupBox";
-            this.PropertiesGroupBox.Size = new System.Drawing.Size(481, 464);
+            this.PropertiesGroupBox.Size = new System.Drawing.Size(481, 310);
             this.PropertiesGroupBox.TabIndex = 2;
             this.PropertiesGroupBox.TabStop = false;
-            this.PropertiesGroupBox.Text = "Properties";
+            this.PropertiesGroupBox.Text = "Model Properties";
             this.PropertiesGroupBox.Enter += new System.EventHandler(this.PropertiesGroupBox_Enter);
             // 
             // groupBox2
@@ -293,16 +309,16 @@
             this.tbName.Name = "tbName";
             this.tbName.Size = new System.Drawing.Size(100, 20);
             this.tbName.TabIndex = 0;
+            this.tbName.TextChanged += new System.EventHandler(this.tbName_TextChanged);
             // 
-            // lstVModels
+            // lbModels
             // 
-            this.lstVModels.Alignment = System.Windows.Forms.ListViewAlignment.Left;
-            this.lstVModels.Location = new System.Drawing.Point(12, 66);
-            this.lstVModels.Name = "lstVModels";
-            this.lstVModels.Size = new System.Drawing.Size(127, 464);
-            this.lstVModels.TabIndex = 3;
-            this.lstVModels.UseCompatibleStateImageBehavior = false;
-            this.lstVModels.SelectedIndexChanged += new System.EventHandler(this.lstVModels_SelectedIndexChanged);
+            this.lbModels.FormattingEnabled = true;
+            this.lbModels.Location = new System.Drawing.Point(12, 61);
+            this.lbModels.Name = "lbModels";
+            this.lbModels.Size = new System.Drawing.Size(120, 459);
+            this.lbModels.TabIndex = 4;
+            this.lbModels.SelectedIndexChanged += new System.EventHandler(this.lbModels_SelectedIndexChanged);
             // 
             // btnAddModel
             // 
@@ -318,18 +334,115 @@
             // 
             this.ofdOpenModel.FileName = "openFileDialog1";
             // 
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuFile});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(626, 24);
+            this.menuStrip1.TabIndex = 5;
+            this.menuStrip1.Text = "menu";
+            // 
+            // menuFile
+            // 
+            this.menuFile.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuSave});
+            this.menuFile.Name = "menuFile";
+            this.menuFile.Size = new System.Drawing.Size(37, 20);
+            this.menuFile.Text = "File";
+            // 
+            // menuSave
+            // 
+            this.menuSave.Name = "menuSave";
+            this.menuSave.Size = new System.Drawing.Size(152, 22);
+            this.menuSave.Text = "Save";
+            this.menuSave.Click += new System.EventHandler(this.menuSave_Click);
+            // 
+            // gbObject
+            // 
+            this.gbObject.Controls.Add(this.tbHp);
+            this.gbObject.Controls.Add(this.lblHp);
+            this.gbObject.Controls.Add(this.tbObjectName);
+            this.gbObject.Controls.Add(this.lblObjectName);
+            this.gbObject.Location = new System.Drawing.Point(145, 66);
+            this.gbObject.Name = "gbObject";
+            this.gbObject.Size = new System.Drawing.Size(469, 138);
+            this.gbObject.TabIndex = 6;
+            this.gbObject.TabStop = false;
+            this.gbObject.Text = "Object Properties";
+            // 
+            // cbBase
+            // 
+            this.cbBase.AutoSize = true;
+            this.cbBase.Location = new System.Drawing.Point(14, 176);
+            this.cbBase.Name = "cbBase";
+            this.cbBase.Size = new System.Drawing.Size(50, 17);
+            this.cbBase.TabIndex = 4;
+            this.cbBase.Text = "Base";
+            this.cbBase.UseVisualStyleBackColor = true;
+            this.cbBase.CheckedChanged += new System.EventHandler(this.cbBase_CheckedChanged);
+            // 
+            // cbCanon
+            // 
+            this.cbCanon.AutoSize = true;
+            this.cbCanon.Location = new System.Drawing.Point(14, 199);
+            this.cbCanon.Name = "cbCanon";
+            this.cbCanon.Size = new System.Drawing.Size(57, 17);
+            this.cbCanon.TabIndex = 5;
+            this.cbCanon.Text = "Canon";
+            this.cbCanon.UseVisualStyleBackColor = true;
+            this.cbCanon.CheckedChanged += new System.EventHandler(this.cbCanon_CheckedChanged);
+            // 
+            // lblObjectName
+            // 
+            this.lblObjectName.AutoSize = true;
+            this.lblObjectName.Location = new System.Drawing.Point(11, 20);
+            this.lblObjectName.Name = "lblObjectName";
+            this.lblObjectName.Size = new System.Drawing.Size(35, 13);
+            this.lblObjectName.TabIndex = 0;
+            this.lblObjectName.Text = "Name";
+            // 
+            // tbObjectName
+            // 
+            this.tbObjectName.Location = new System.Drawing.Point(52, 17);
+            this.tbObjectName.Name = "tbObjectName";
+            this.tbObjectName.Size = new System.Drawing.Size(100, 20);
+            this.tbObjectName.TabIndex = 1;
+            this.tbObjectName.TextChanged += new System.EventHandler(this.tbObjectName_TextChanged);
+            // 
+            // lblHp
+            // 
+            this.lblHp.AutoSize = true;
+            this.lblHp.Location = new System.Drawing.Point(11, 43);
+            this.lblHp.Name = "lblHp";
+            this.lblHp.Size = new System.Drawing.Size(22, 13);
+            this.lblHp.TabIndex = 2;
+            this.lblHp.Text = "HP";
+            // 
+            // tbHp
+            // 
+            this.tbHp.Location = new System.Drawing.Point(52, 43);
+            this.tbHp.Name = "tbHp";
+            this.tbHp.Size = new System.Drawing.Size(39, 20);
+            this.tbHp.TabIndex = 3;
+            this.tbHp.TextChanged += new System.EventHandler(this.tbHp_TextChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(626, 555);
+            this.Controls.Add(this.gbObject);
+            this.Controls.Add(this.lbModels);
             this.Controls.Add(this.btnAddModel);
-            this.Controls.Add(this.lstVModels);
             this.Controls.Add(this.PropertiesGroupBox);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.statusStrip1);
+            this.Controls.Add(this.menuStrip1);
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
-            this.Text = "SGCT Remote";
+            this.Text = "Model Editor";
             this.Closed += new System.EventHandler(this.MainForm_Closed);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
@@ -341,6 +454,10 @@
             this.groupBox2.PerformLayout();
             this.gbPosition.ResumeLayout(false);
             this.gbPosition.PerformLayout();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
+            this.gbObject.ResumeLayout(false);
+            this.gbObject.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -355,7 +472,6 @@
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.TextBox ipTextBox;
         private System.Windows.Forms.GroupBox PropertiesGroupBox;
-        private System.Windows.Forms.ListView lstVModels;
         private System.Windows.Forms.Button btnAddModel;
         private System.Windows.Forms.OpenFileDialog ofdOpenModel;
         private System.Windows.Forms.Label lblName;
@@ -374,6 +490,19 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.ListBox lbModels;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem menuFile;
+        private System.Windows.Forms.ToolStripMenuItem menuSave;
+        private System.Windows.Forms.SaveFileDialog sfdSaveJson;
+        private System.Drawing.Printing.PrintDocument printDocument1;
+        private System.Windows.Forms.GroupBox gbObject;
+        private System.Windows.Forms.CheckBox cbCanon;
+        private System.Windows.Forms.CheckBox cbBase;
+        private System.Windows.Forms.TextBox tbHp;
+        private System.Windows.Forms.Label lblHp;
+        private System.Windows.Forms.TextBox tbObjectName;
+        private System.Windows.Forms.Label lblObjectName;
     }
 }
 
