@@ -58,27 +58,15 @@ sgct::SharedBool stats(false);
 sgct::SharedBool takeScreenshot(false);
 sgct::SharedBool light(true);
 
-sgct::SharedDouble mousex(0.0);
-sgct::SharedDouble mousey(0.0);
-sgct::SharedDouble mousez(0.0);
-
 float rotationSpeed = 4.0f;
 float rollSpeed = 50.0f;
 float walkingSpeed = 10.0f;
 
 glm::mat4 result;
 
-
 glm::vec3 view(0.0f, 0.0f, 1.0f);
 glm::vec3 up(0.0f, 1.0f, 0.0f);
 glm::vec3 pos(0.0f, 0.0f, 0.0f);
-
-
-osg::Vec3d x(1.0, 0.0, 0.0);
-osg::Vec3d y(0.0, 1.0, 0.0);
-osg::Vec3d z(0.0, 0.0, 1.0);
-
-
 
 sgct::SharedObject<glm::mat4> xform;
 
@@ -86,18 +74,12 @@ sgct::SharedObject<glm::mat4> xform;
 //other var
 bool arrowButtons[4];
 enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT };
-const double navigation_speed = 5.0;
-const double mouse_speed = 0.1;
-double horizontalAngle = 3.14;
-double verticalAngle = 0.0;
 
 double mouseDx = 0.0;
 double mouseDy = 0.0;
 
-double temp = 0.0;
-
-double mouseXPos[] = { 0.0, 0.0 };
-double mouseYPos[] = { 0.0, 0.0 };
+double mouseXPos = 0.0;
+double mouseYPos = 0.0;
 
 
 
@@ -156,18 +138,18 @@ void myInitOGLFun()
  osg::ref_ptr<osg::Geode> geode = new osg::Geode;
  gEngine->setNearAndFarClippingPlanes(0.1f,1000.0f);
  geode->addDrawable( new osg::ShapeDrawable(
-       new osg::Sphere(osg::Vec3(), 990.0f)) );
+       new osg::Sphere(osg::Vec3(), 950.0f)) );
  
   osg::ref_ptr<SkyBox> skybox = new SkyBox;
   skybox->getOrCreateStateSet()->setTextureAttributeAndModes( 0, new osg::TexGen );
-  skybox->setEnvironmentMap( 0,
-       osgDB::readImageFile("BlueChecker.png"), osgDB::readImageFile("OrangeChecker.png"),
-       osgDB::readImageFile("GreenChecker.png"), osgDB::readImageFile("YellowChecker.png"),
-       osgDB::readImageFile("RedChecker.png"), osgDB::readImageFile("PurpleChecker.png") );
   // skybox->setEnvironmentMap( 0,
-  //      osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
-  //      osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
-  //      osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png") );
+  //      osgDB::readImageFile("BlueChecker.png"), osgDB::readImageFile("OrangeChecker.png"),
+  //      osgDB::readImageFile("GreenChecker.png"), osgDB::readImageFile("YellowChecker.png"),
+  //      osgDB::readImageFile("RedChecker.png"), osgDB::readImageFile("PurpleChecker.png") );
+  skybox->setEnvironmentMap( 0,
+       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png") );
   skybox->addChild( geode );
   mSceneTrans->addChild( skybox );
  
@@ -249,9 +231,9 @@ void myPreSyncFun()
 		width = gEngine->getActiveXResolution();
 		height = gEngine->getActiveYResolution();
 
-		sgct::Engine::getMousePos( gEngine->getFocusedWindowIndex(), &mouseXPos[0], &mouseYPos[0]);
-		mouseDx = mouseXPos[0] - width/2;
-		mouseDy = mouseYPos[0] - height/2;
+		sgct::Engine::getMousePos( gEngine->getFocusedWindowIndex(), &mouseXPos, &mouseYPos);
+		mouseDx = mouseXPos - width/2;
+		mouseDy = mouseYPos - height/2;
 
 		sgct::Engine::setMousePos( gEngine->getFocusedWindowIndex(), width/2, height/2);
 
@@ -354,11 +336,6 @@ void myDrawFun()
 void myEncodeFun()
 {
 	sgct::SharedData::instance()->writeDouble( &curr_time );
-	sgct::SharedData::instance()->writeDouble( &dist );
-	sgct::SharedData::instance()->writeDouble( &sideways );
-	sgct::SharedData::instance()->writeDouble( &mousex );
-	sgct::SharedData::instance()->writeDouble( &mousey );
-	sgct::SharedData::instance()->writeDouble( &mousez );
 
 	sgct::SharedData::instance()->writeBool( &wireframe );
 	sgct::SharedData::instance()->writeBool( &info );
@@ -371,11 +348,6 @@ void myEncodeFun()
 void myDecodeFun()
 {
 	sgct::SharedData::instance()->readDouble( &curr_time );
-	sgct::SharedData::instance()->readDouble( &dist );
-	sgct::SharedData::instance()->readDouble( &sideways );
-	sgct::SharedData::instance()->readDouble( &mousex );
-	sgct::SharedData::instance()->readDouble( &mousey );
-	sgct::SharedData::instance()->readDouble( &mousez );
 
 	sgct::SharedData::instance()->readBool( &wireframe );
 	sgct::SharedData::instance()->readBool( &info );
