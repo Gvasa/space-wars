@@ -72,8 +72,8 @@ sgct::SharedObject<glm::mat4> xform;
 
 
 //other var
-bool arrowButtons[4];
-enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT };
+bool arrowButtons[5];
+enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT, LEFT_MOUSE };
 
 double mouseDx = 0.0;
 double mouseDy = 0.0;
@@ -152,16 +152,6 @@ void myInitOGLFun()
        osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png") );
   skybox->addChild( geode );
   mSceneTrans->addChild( skybox );
- 
- 
-  // osg::Box* unitCube = new osg::Box( osg::Vec3(0,0,0), 1.0f);
-  // osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
-  // osg::Geode* basicShapesGeode = new osg::Geode();
-  // basicShapesGeode->addDrawable(unitCubeDrawable);
-  // mRootNode->addChild(basicShapesGeode);
-  // basicShapesGeode->getOrCreateStateSet()->setMode( GL_CULL_FACE,
-  //     osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
-
 
 int size = 100;
   for(int x = -(size/2); x < (size/2); x++)
@@ -170,7 +160,7 @@ int size = 100;
     osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
     gridCubeDrawable->computeBound();
     osg::Geode* gridShapesGeode = new osg::Geode();
-    gridShapesGeode->addDrawable(gridCubeDrawable);
+    gridShapesGeode->addDrawable(gridCubeDrawable); 
     mSceneTrans->addChild(gridShapesGeode);
   }
  
@@ -243,6 +233,8 @@ void myPreSyncFun()
 		static float vertRot = 0.0f;
 		vertRot += (static_cast<float>(mouseDy) * rotationSpeed * static_cast<float>(gEngine->getDt()));
 		
+		// static float rollRot = 0.0f;
+		// if()
 
 
 		glm::mat4 ViewRotateX = glm::rotate(
@@ -255,13 +247,13 @@ void myPreSyncFun()
 			vertRot,
 			glm::vec3(1.0f, 0.0f, 0.0f)); //rotation around the x-axis
 			
-		/*glm::mat4 ViewRotateZ = glm::rotate(
-			glm::mat4(1.0f),
-			rollRot,
-			glm::vec3(0.0f, 0.0f, 1.0f));
-		*/
+		// glm::mat4 ViewRotateZ = glm::rotate(
+		// 	glm::mat4(1.0f),
+		// 	rollRot,
+		// 	glm::vec3(0.0f, 0.0f, 1.0f)); //rotation around the z-axis
+		
 
-		glm::mat4 ViewMat = ViewRotateY * ViewRotateX;	
+		glm::mat4 ViewMat = ViewRotateY * ViewRotateX;
 		view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
 
 
@@ -275,6 +267,24 @@ void myPreSyncFun()
 			pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
 		if( arrowButtons[RIGHT] )
 			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+
+		if( arrowButtons[LEFT_MOUSE] ){
+
+			osg::Box* projectile = new osg::Box( osg::Vec3(0.0f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
+			osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
+			projectileDrawable->computeBound();
+			osg::Geode* projectileGeode = new osg::Geode();
+			projectileGeode->addDrawable(projectileDrawable);
+
+			osg::MatrixTransform* trans = new osg::MatrixTransform;
+			trans->addChild(projectileGeode);
+
+			glm::mat4 temp =  glm::translate( glm::mat4(1.0f), glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f))
+								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+			trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
+			mSceneTrans->addChild(trans);
+		}
 		
 		result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
 		//2. apply transformation
@@ -419,6 +429,11 @@ void keyCallback(int key, int action)
 		case SGCT_KEY_RIGHT:
 		case SGCT_KEY_D:
 			arrowButtons[RIGHT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+			break;
+
+		case SGCT_MOUSE_BUTTON_LEFT:
+		case SGCT_KEY_F:
+			arrowButtons[LEFT_MOUSE] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
 			break;
 		}
 	}
