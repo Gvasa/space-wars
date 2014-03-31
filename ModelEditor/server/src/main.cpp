@@ -26,6 +26,8 @@ void encode();
 void decode();
 void cleanUp();
 void clientCallback(const char * receivedChars, int size, int clientId);
+void keyCallback(int key, int action);
+void mouseButtonCallback(int key, int action);
 
 // Other functions.
 void addModel(std::string fileName);
@@ -37,9 +39,32 @@ std::vector<osg::ref_ptr<osg::Node>> _models;
 std::vector<osg::ref_ptr<osg::MatrixTransform>> _modelTransforms;
 std::vector<osg::Vec4d> _boundingBoxInfos;
 int selectedModel = 0;
+bool first = true;
 osg::Vec3d translation;
 osg::Vec3d rotation;
 
+// Camera control variables.
+bool arrowButtons[4];
+enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT };
+bool _leftMousePressed = false;
+
+double _mouseDx = 0.0;
+double _mouseDy = 0.0;
+
+double _mouseXPos = 0.0;
+double _mouseYPos = 0.0;
+double _mouseClickXPos = 0.0;
+double _mouseClickYPos = 0.0;
+
+float _rotationSpeed = 4.0f;
+float _rollSpeed = 50.0f;
+float _walkingSpeed = 10.0f;
+
+glm::vec3 view(0.0f, 0.0f, 1.0f);
+glm::vec3 up(0.0f, 1.0f, 0.0f);
+glm::vec3 pos(0.0f, 0.0f, 0.0f);
+
+glm::mat4 result;
 
 int main(int argc, char* argv[])
 {
@@ -51,6 +76,11 @@ int main(int argc, char* argv[])
   _engine->setDrawFunction(draw);
   _engine->setCleanUpFunction(cleanUp);
   _engine->setExternalControlCallback(clientCallback);
+  _engine->setKeyboardCallbackFunction(keyCallback);
+  _engine->setMouseButtonCallbackFunction(mouseButtonCallback);
+
+  for(int i=0; i<4; i++)
+    arrowButtons[i] = false;
 
   if( !_engine->init() )
   {
@@ -103,13 +133,13 @@ void init()
 
   light0->setLightNum( 0 );
   light0->setPosition( osg::Vec4( 5.0f, 5.0f, 10.0f, 1.0f ) );
-  light0->setAmbient( osg::Vec4( 0.3f, 0.3f, 0.3f, 1.0f ) );
+  light0->setAmbient( osg::Vec4( 1.0f, 0.3f, 0.3f, 1.0f ) );
   light0->setDiffuse( osg::Vec4( 0.8f, 0.8f, 0.8f, 1.0f ) );
   light0->setSpecular( osg::Vec4( 0.1f, 0.1f, 0.1f, 1.0f ) );
   light0->setConstantAttenuation( 1.0f );
 
   lightSource0->setLight( light0 );
-    lightSource0->setLocalStateSetModes( osg::StateAttribute::ON );
+  lightSource0->setLocalStateSetModes( osg::StateAttribute::ON );
   lightSource0->setStateSetModes( *(_root->getOrCreateStateSet()), osg::StateAttribute::ON );
 
   light1->setLightNum( 1 );
@@ -120,7 +150,7 @@ void init()
   light1->setConstantAttenuation( 1.0f );
 
   lightSource1->setLight( light1 );
-    lightSource1->setLocalStateSetModes( osg::StateAttribute::ON );
+  lightSource1->setLocalStateSetModes( osg::StateAttribute::ON );
   lightSource1->setStateSetModes( *(_root->getOrCreateStateSet()), osg::StateAttribute::ON );
 
   _root->addChild( lightSource0 );
@@ -139,6 +169,59 @@ void preSync()
   if( _engine->isMaster() )
   {
     curr_time.setVal( sgct::Engine::getTime() );
+
+    static float panRot = 0.0f;
+    static float vertRot = 0.0f;
+    if (_leftMousePressed)
+    {
+      int width, height;
+      width = _engine->getActiveXResolution();
+      height = _engine->getActiveYResolution();
+      sgct::Engine::getMousePos(_engine->getFocusedWindowIndex(), &_mouseXPos, &_mouseYPos);
+
+      _mouseDx = _mouseXPos - _mouseClickXPos;
+      _mouseDy = _mouseYPos - _mouseClickYPos;
+
+      sgct::Engine::setMousePos(_engine->getFocusedWindowIndex(), _mouseClickXPos, _mouseClickYPos);
+
+      
+      panRot += (static_cast<float>(_mouseDx) * _rotationSpeed * static_cast<float>(_engine->getDt()));
+      
+      vertRot += (static_cast<float>(_mouseDy) * _rotationSpeed * static_cast<float>(_engine->getDt()));
+    }
+
+    glm::mat4 ViewRotateX = glm::rotate(
+      glm::mat4(1.0f),
+      panRot,
+      glm::vec3(0.0f, 1.0f, 0.0f)); //rotation around the y-axis
+
+    glm::mat4 ViewRotateY = glm::rotate(
+      glm::mat4(1.0f),
+      vertRot,
+      glm::vec3(1.0f, 0.0f, 0.0f)); //rotation around the x-axis
+
+    glm::mat4 ViewMat = ViewRotateY * ViewRotateX;  
+    view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
+
+    glm::vec3 right = glm::cross(view, up);
+
+    if( arrowButtons[FORWARD] )
+      pos += (_walkingSpeed * static_cast<float>(_engine->getDt()) * view);
+    if( arrowButtons[BACKWARD] )
+      pos -= (_walkingSpeed * static_cast<float>(_engine->getDt()) * view);
+    if( arrowButtons[LEFT] )
+      pos -= (_walkingSpeed * static_cast<float>(_engine->getDt()) * right);
+    if( arrowButtons[RIGHT] )
+      pos += (_walkingSpeed * static_cast<float>(_engine->getDt()) * right);
+
+    result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
+    //2. apply transformation
+    result *= (ViewMat *  glm::translate( glm::mat4(1.0f), pos ));
+    //1. transform user to coordinate system origin
+    result *= glm::translate( glm::mat4(1.0f), -sgct::Engine::getUserPtr()->getPos() );
+
+
+    _sceneTransform->setMatrix(osg::Matrixd(glm::value_ptr(result)));
   }
 }
 
@@ -147,21 +230,22 @@ void postSyncPreDraw()
   _root->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
   // _sceneTransform->setMatrix(osg::Matrix::rotate( glm::radians(curr_time.getVal() * 8.0), 0.0, 1.0, 0.0));
-  _sceneTransform->setMatrix(osg::Matrix::translate(0.0, -0.1, -2));
+  //_sceneTransform->setMatrix(osg::Matrix::translate(0.0, -0.1, -2));
   _sceneTransform->postMult( osg::Matrix( glm::value_ptr(_engine->getModelMatrix())));
 
   if (_modelTransforms.size() > selectedModel)
   {
     double radius = _boundingBoxInfos.at(selectedModel).w();
-    osg::Vec3d tmpVec(_boundingBoxInfos.at(selectedModel).x(), _boundingBoxInfos.at(selectedModel).y(), _boundingBoxInfos.at(selectedModel).z());
-    _modelTransforms.at(selectedModel)->setMatrix(osg::Matrix::rotate(glm::radians(-90.0f), 1.0f, 0.0f, 0.0f));
-    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::translate( -tmpVec ) );
-    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::scale( 1.0f/radius, 1.0f/radius, 1.0f/radius ));
+    glm::vec3 tmpVec(_boundingBoxInfos.at(selectedModel).x(), _boundingBoxInfos.at(selectedModel).y(), _boundingBoxInfos.at(selectedModel).z());
+    //_modelTransforms.at(selectedModel)->setMatrix(osg::Matrixd(glm::value_ptr(glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))));
+    _modelTransforms.at(selectedModel)->setMatrix(osg::Matrixd(glm::value_ptr(glm::translate(glm::mat4(1), -tmpVec))));
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrixd(glm::value_ptr(glm::scale(glm::mat4(1), glm::vec3(1.0f/radius, 1.0f/radius, 1.0f/radius )))));
+    
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrixd(glm::value_ptr(glm::rotate(glm::mat4(1), (float) rotation.x(), glm::vec3(1.0f, 0.0f, 0.0f)))));
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrixd(glm::value_ptr(glm::rotate(glm::mat4(1), (float) rotation.y(), glm::vec3(0.0f, 1.0f, 0.0f)))));
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrixd(glm::value_ptr(glm::rotate(glm::mat4(1), (float) rotation.z(), glm::vec3(0.0f, 0.0f, 1.0f)))));
 
-    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::rotate(rotation.x(), osg::Vec3f(1,0,0)));
-    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::rotate(rotation.y(), osg::Vec3f(0,1,0)));
-    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::rotate(rotation.z(), osg::Vec3f(0,0,1)));
-    _modelTransforms.at(selectedModel)->postMult(osg::Matrix::translate(translation));
+    _modelTransforms.at(selectedModel)->postMult(osg::Matrixd(glm::value_ptr(glm::translate(glm::mat4(1), glm::vec3(translation.x(), translation.y(), translation.z())))));
 
   }
 
@@ -233,16 +317,16 @@ void clientCallback(const char * receivedChars, int size, int clientId)
     }else if (strncmp(receivedChars, "rotationX", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      rotation.x() = strToDouble(tmp)/200;
+      rotation.x() = strToDouble(tmp)/20;
       // std::cout << rotation.x() << std::endl;
     }else if (strncmp(receivedChars, "rotationY", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      rotation.y() = strToDouble(tmp)/200;
+      rotation.y() = strToDouble(tmp)/20;
     }else if (strncmp(receivedChars, "rotationZ", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);
-      rotation.z() = strToDouble(tmp)/200;
+      rotation.z() = strToDouble(tmp)/20;
     }else if (strncmp(receivedChars, "selectedModel", 13) == 0)
     {
       std::string tmp(receivedChars + 14, receivedChars + size);
@@ -261,7 +345,8 @@ void addModel(std::string fileName)
     sgct::MessageHandler::instance()->print("Successfully loaded model. \n");
 
     _modelTransforms.push_back(new osg::MatrixTransform());
-    _modelTransforms.back()->setMatrix(osg::Matrix::rotate(glm::radians(-90.0f), 1.0f, 0.0f, 0.0f));
+    
+   // _modelTransforms.back()->setMatrix(osg::Matrixd(glm::value_ptr(glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))));
 
     _modelTransforms.back()->addChild(_models.back().get());
 
@@ -275,9 +360,19 @@ void addModel(std::string fileName)
 
     _boundingBoxInfos.push_back(osg::Vec4d(tmpVec, bb.radius()));
 
-    _modelTransforms.back()->postMult(osg::Matrix::translate( -tmpVec ) );
-    _modelTransforms.back()->postMult(osg::Matrix::scale( 1.0f/bb.radius(), 1.0f/bb.radius(), 1.0f/bb.radius() ));
-    _sceneTransform->addChild(_modelTransforms.back());
+    
+    _modelTransforms.back()->setMatrix(osg::Matrixd(glm::value_ptr(glm::translate(glm::mat4(1), glm::vec3(-tmpVec.x(), -tmpVec.y(), -tmpVec.z())))));
+    _modelTransforms.back()->postMult(osg::Matrixd(glm::value_ptr(glm::scale(glm::mat4(1), glm::vec3(1.0f/bb.radius(), 1.0f/bb.radius(), 1.0f/bb.radius())))));
+   
+    if (_modelTransforms.size() == 1)
+    {
+      _sceneTransform->addChild(_modelTransforms.back());
+    }else 
+      _modelTransforms.front()->addChild(_modelTransforms.back());
+
+    _models.back()->getOrCreateStateSet()->setMode( GL_CULL_FACE,
+      osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+    _models.back()->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
   }else
   {
@@ -308,4 +403,40 @@ double strToDouble(std::string value)
   // std::cout << "value100 = " << base + decimals/100.0f << std::endl;
   // std::cout << "value10 = " << base + decimals/10.0f << std::endl;
   return base + decimals/10.0f;
+}
+
+void keyCallback(int key, int action)
+{
+  if (_engine->isMaster())
+  {
+    switch (key)
+    {
+      case 'W':
+        arrowButtons[FORWARD] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+      break;
+      case 'S':
+        arrowButtons[BACKWARD] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+      break;
+      case 'A':
+        arrowButtons[LEFT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+      break;
+      case 'D':
+        arrowButtons[RIGHT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+      break;
+    }
+  }
+}
+
+void mouseButtonCallback(int key, int action)
+{
+  if (_engine->isMaster())
+  {
+    switch (key)
+    {
+      case SGCT_MOUSE_BUTTON_LEFT:
+        _leftMousePressed = (action == SGCT_PRESS) ? true : false;
+        sgct::Engine::getMousePos(_engine->getFocusedWindowIndex(), &_mouseClickXPos, &_mouseClickYPos);
+      break;
+    }
+  }
 }
