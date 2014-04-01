@@ -81,7 +81,15 @@ double mouseDy = 0.0;
 double mouseXPos = 0.0;
 double mouseYPos = 0.0;
 
+const int size = 1000;
+double checktime = 0.0;
+double checktime2[size];
 
+int checkchild;
+
+int numchild = 202;
+int i = 0;
+int j = 0;
 
 int main( int argc, char* argv[] )
 {
@@ -268,7 +276,10 @@ void myPreSyncFun()
 		if( arrowButtons[RIGHT] )
 			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
 
-		if( arrowButtons[LEFT_MOUSE] ){
+		if( arrowButtons[LEFT_MOUSE] && checktime+0.1 < sgct::Engine::getTime()){
+
+			checktime = sgct::Engine::getTime();
+
 
 			osg::Box* projectile = new osg::Box( osg::Vec3(0.0f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
 			osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
@@ -284,6 +295,26 @@ void myPreSyncFun()
 
 			trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
 			mSceneTrans->addChild(trans);
+
+			checkchild = mSceneTrans->getChildIndex(trans);
+
+			// std::cout << checkchild << std::endl;
+			std::cout << "i: " << i << std::endl;
+			checktime2[i] = sgct::Engine::getTime();
+			i++;
+			if(i == size)
+				i = 0;
+		}
+
+		if(checktime2[j] != 0.0 && checktime2[j]+10.0 < sgct::Engine::getTime()){
+			mSceneTrans->removeChild(numchild, 1);
+			std::cout << "j: " << j << std::endl;
+			checktime2[j] = 0.0;
+			j++;
+			if(j == size)
+				j = 0;
+	
+			// checktime2 = sgct::Engine::getTime();
 		}
 		
 		result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
