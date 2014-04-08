@@ -22,6 +22,7 @@
 #include "skybox.h"
 #include "Package.h"
 #include "NavigationPackage.h"
+#include "set.cpp"
 
 sgct::Engine * gEngine;
 
@@ -61,12 +62,15 @@ sgct::SharedBool light(true);
 float rotationSpeed = 4.0f;
 float rollSpeed = 50.0f;
 float walkingSpeed = 10.0f;
+float projectile_speed = 20.0f;
 
 glm::mat4 result;
 
 glm::vec3 view(0.0f, 0.0f, 1.0f);
 glm::vec3 up(0.0f, 1.0f, 0.0f);
 glm::vec3 pos(0.0f, 0.0f, 0.0f);
+
+
 
 sgct::SharedObject<glm::mat4> xform;
 
@@ -82,6 +86,10 @@ double mouseXPos = 0.0;
 double mouseYPos = 0.0;
 
 const int size = 1000;
+glm::vec3 viewdir;
+glm::vec3 projectilepos;
+glm::mat4 ViewArray;
+
 double checktime = 0.0;
 double checktime2[size];
 
@@ -90,6 +98,12 @@ int checkchild;
 int numchild = 202;
 int i = 0;
 int j = 0;
+int h = 0;
+int k = 0;
+
+Set<glm::vec3> positions;
+Set<glm::vec3> viewdirections;
+Set<glm::mat4> viewarrays;
 
 int main( int argc, char* argv[] )
 {
@@ -288,7 +302,9 @@ void myPreSyncFun()
 			projectileGeode->addDrawable(projectileDrawable);
 
 			osg::MatrixTransform* trans = new osg::MatrixTransform;
+
 			trans->addChild(projectileGeode);
+
 
 			glm::mat4 temp =  glm::translate( glm::mat4(1.0f), glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f))
 								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
@@ -298,18 +314,64 @@ void myPreSyncFun()
 
 			checkchild = mSceneTrans->getChildIndex(trans);
 
+			// for(int p = 202; p < mSceneTrans->getNumChildren()-1; p++){
+			// 	std::cout << mSceneTrans->getNumChildren() << std::endl;
+			// }
+
+			viewdir = view;
+
+			projectilepos = glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f);
+
+			ViewArray = ViewMat;
+
+			positions.add(projectilepos);
+			viewdirections.add(viewdir);
+			viewarrays.add(ViewArray);
+
 			// std::cout << checkchild << std::endl;
-			std::cout << "i: " << i << std::endl;
+			// std::cout << "i: " << i << std::endl;
 			checktime2[i] = sgct::Engine::getTime();
 			i++;
 			if(i == size)
 				i = 0;
 		}
 
+		Set<glm::vec3>::Node* temp1 = positions.head->next;
+		Set<glm::vec3>::Node* temp2 = viewdirections.head->next;
+		Set<glm::mat4>::Node* temp3 = viewarrays.head->next;
+
+		for(int q = 202; q < mSceneTrans->getNumChildren(); q++){
+
+				
+
+				glm::mat4 tempen = glm::translate( glm::mat4(1.0f), temp1->pos)
+								 		* glm::inverse(temp3->pos) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+				mSceneTrans->getChild(q)->asTransform()->asMatrixTransform()->setMatrix(osg::Matrixd(glm::value_ptr(tempen)) );
+
+
+				// std::cout << k << std::endl;
+				// std::cout << mSceneTrans->getNumChildren()-203 << std::endl;
+
+				temp1->pos += (-temp2->pos * projectile_speed * static_cast<float>(gEngine->getDt()) );
+
+				temp1 = temp1->next;
+				temp2 = temp2->next;
+				temp3 = temp3->next;
+
+		}
+
+
 		if(checktime2[j] != 0.0 && checktime2[j]+10.0 < sgct::Engine::getTime()){
 			mSceneTrans->removeChild(numchild, 1);
-			std::cout << "j: " << j << std::endl;
+
+			// std::cout << "j: " << j << std::endl;
 			checktime2[j] = 0.0;
+
+			positions.remove();
+			viewdirections.remove();
+			viewarrays.remove();
+
 			j++;
 			if(j == size)
 				j = 0;
