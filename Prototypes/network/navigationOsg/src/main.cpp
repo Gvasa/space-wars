@@ -62,7 +62,7 @@ sgct::SharedBool light(true);
 float rotationSpeed = 4.0f;
 float rollSpeed = 50.0f;
 float walkingSpeed = 10.0f;
-float projectile_speed = 20.0f;
+float projectile_speed = 50.0f;
 
 glm::mat4 result;
 
@@ -98,8 +98,6 @@ int checkchild;
 int numchild = 202;
 int i = 0;
 int j = 0;
-int h = 0;
-int k = 0;
 
 Set<glm::vec3> positions;
 Set<glm::vec3> viewdirections;
