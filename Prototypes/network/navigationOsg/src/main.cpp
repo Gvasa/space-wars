@@ -71,13 +71,12 @@ glm::vec3 up(0.0f, 1.0f, 0.0f);
 glm::vec3 pos(0.0f, 0.0f, 0.0f);
 
 
-
 sgct::SharedObject<glm::mat4> xform;
 
 
 //other var
-bool arrowButtons[5];
-enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT, LEFT_MOUSE };
+bool arrowButtons[6];
+enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT, LEFT_MOUSE, LASER };
 
 double mouseDx = 0.0;
 double mouseDy = 0.0;
@@ -94,6 +93,8 @@ double checktime = 0.0;
 double checktime2[size];
 
 int checkchild;
+int checklaser = 0;
+int laserpos = 1;
 
 int numchild = 202;
 int i = 0;
@@ -247,14 +248,30 @@ void myPreSyncFun()
 
 		sgct::Engine::setMousePos( gEngine->getFocusedWindowIndex(), width/2, height/2);
 
-
-		static float panRot = 0.0f;
-		panRot += (static_cast<float>(mouseDx) * rotationSpeed * static_cast<float>(gEngine->getDt()));
 		static float vertRot = 0.0f;
 		vertRot += (static_cast<float>(mouseDy) * rotationSpeed * static_cast<float>(gEngine->getDt()));
+
+		if(vertRot > 180)
+			vertRot = -180;
+		if(vertRot < -180)
+			vertRot = 180;
+
+		static float panRot = 0.0f;
+
+		if(vertRot < 90 && vertRot > -90)
+			panRot += (static_cast<float>(mouseDx) * rotationSpeed * static_cast<float>(gEngine->getDt()));
+		else
+			panRot -= (static_cast<float>(mouseDx) * rotationSpeed * static_cast<float>(gEngine->getDt()));
+
+		if(panRot > 180)
+			panRot = -180;
+		if(panRot < -180)
+			panRot = 180;
 		
 		// static float rollRot = 0.0f;
-		// if()
+
+		// std::cout << " panRot: " << panRot << std::endl;
+		// std::cout << " vertRot: " << vertRot << std::endl;
 
 
 		glm::mat4 ViewRotateX = glm::rotate(
@@ -283,42 +300,79 @@ void myPreSyncFun()
 			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
 		if( arrowButtons[BACKWARD] )
 			pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
-		if( arrowButtons[LEFT] )
-			pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
-		if( arrowButtons[RIGHT] )
-			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+
+
+		if( arrowButtons[LEFT] ){
+			if(vertRot < 90 && vertRot > -90)
+				pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+			else
+				pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+		}
+
+		if( arrowButtons[RIGHT] ){
+			if(vertRot < 90 && vertRot > -90)
+				pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+			else
+				pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+		}
+
 
 		if( arrowButtons[LEFT_MOUSE] && checktime+0.1 < sgct::Engine::getTime()){
 
 			checktime = sgct::Engine::getTime();
 
-
-			osg::Box* projectile = new osg::Box( osg::Vec3(0.0f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
-			osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
-			projectileDrawable->computeBound();
-			osg::Geode* projectileGeode = new osg::Geode();
-			projectileGeode->addDrawable(projectileDrawable);
-
 			osg::MatrixTransform* trans = new osg::MatrixTransform;
 
-			trans->addChild(projectileGeode);
 
+			if(laserpos % 2 != 0){
 
-			glm::mat4 temp =  glm::translate( glm::mat4(1.0f), glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f))
+				osg::Box* projectile = new osg::Box( osg::Vec3(-0.5f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
+				osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
+				projectileDrawable->computeBound();
+				osg::Geode* projectileGeode = new osg::Geode();
+				projectileGeode->addDrawable(projectileDrawable);
+				trans->addChild(projectileGeode);
+
+				projectilepos = glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f);
+
+				glm::mat4 temp =  glm::translate( glm::mat4(1.0f), projectilepos)
 								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
-			trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
+				laserpos++;
+
+				trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
+
+			}
+			else{
+
+				osg::Box* projectile = new osg::Box( osg::Vec3(0.5f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
+				osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
+				projectileDrawable->computeBound();
+				osg::Geode* projectileGeode = new osg::Geode();
+				projectileGeode->addDrawable(projectileDrawable);
+				trans->addChild(projectileGeode);
+				
+
+				projectilepos = glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f);
+
+				glm::mat4 temp =  glm::translate( glm::mat4(1.0f), projectilepos)
+								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+				laserpos++;
+
+				trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
+			}
+
+			
 			mSceneTrans->addChild(trans);
 
-			checkchild = mSceneTrans->getChildIndex(trans);
+			// checkchild = mSceneTrans->getChildIndex(trans);
 
 			// for(int p = 202; p < mSceneTrans->getNumChildren()-1; p++){
 			// 	std::cout << mSceneTrans->getNumChildren() << std::endl;
 			// }
 
 			viewdir = view;
-
-			projectilepos = glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f);
 
 			ViewArray = ViewMat;
 
@@ -333,6 +387,7 @@ void myPreSyncFun()
 			if(i == size)
 				i = 0;
 		}
+
 
 		Set<glm::vec3>::Node* temp1 = positions.head->next;
 		Set<glm::vec3>::Node* temp2 = viewdirections.head->next;
@@ -375,6 +430,37 @@ void myPreSyncFun()
 				j = 0;
 	
 			// checktime2 = sgct::Engine::getTime();
+		}
+
+		if(checklaser == 1){
+			mSceneTrans->removeChild(mSceneTrans->getChild(mSceneTrans->getNumChildren()-1));
+			checklaser = 0;
+		}
+
+		if( arrowButtons[LASER] && !arrowButtons[LEFT_MOUSE]){
+
+			checktime = sgct::Engine::getTime();
+
+
+			osg::Box* projectile = new osg::Box( osg::Vec3(0.0f, -0.3f, -250.0f), 0.1f, 0.1f, 500.0f);
+			osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
+			projectileDrawable->computeBound();
+			osg::Geode* projectileGeode = new osg::Geode();
+			projectileGeode->addDrawable(projectileDrawable);
+
+			osg::MatrixTransform* trans = new osg::MatrixTransform;
+
+			trans->addChild(projectileGeode);
+
+
+			glm::mat4 temp =  glm::translate( glm::mat4(1.0f), glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f))
+								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+			trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
+			mSceneTrans->addChild(trans);
+
+			checklaser = 1;
+
 		}
 		
 		result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
@@ -525,6 +611,10 @@ void keyCallback(int key, int action)
 		case SGCT_MOUSE_BUTTON_LEFT:
 		case SGCT_KEY_F:
 			arrowButtons[LEFT_MOUSE] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+			break;
+
+		case SGCT_KEY_G:
+			arrowButtons[LASER] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
 			break;
 		}
 	}
