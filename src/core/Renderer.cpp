@@ -28,6 +28,28 @@ Renderer::Renderer()
   _sceneTransform = new osg::MatrixTransform();
   _root->addChild(_sceneTransform.get());
 
+
+  int size = 1000;
+  for(int x = -(size/2); x < (size/2); x++)
+  {
+    osg::Box* gridCube = new osg::Box( osg::Vec3(x,-1,0), 0.05, 0.05, size);
+    osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
+    gridCubeDrawable->computeBound();
+    osg::Geode* gridShapesGeode = new osg::Geode();
+    gridShapesGeode->addDrawable(gridCubeDrawable);
+    _sceneTransform->addChild(gridShapesGeode);
+  }
+ 
+  for(int z = -(size/2); z < (size/2); z++)
+  {
+    osg::Box* gridCube = new osg::Box( osg::Vec3(0,-1,z), size, 0.05, 0.05);
+    osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
+    osg::Geode* gridShapesGeode = new osg::Geode();
+    gridShapesGeode->addDrawable(gridCubeDrawable);
+    _sceneTransform->addChild(gridShapesGeode);
+  }
+
+  _root->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 }
 
 Renderer::~Renderer()
@@ -45,8 +67,15 @@ void Renderer::render()
 
 }
 
-void Renderer::update(double currentTime, unsigned int frameNumber)
+void Renderer::updatePreSync(double currentTime)
 {
+  
+}
+
+void Renderer::updatePostSync(double currentTime, unsigned int frameNumber, glm::mat4 modelMatrix)
+{
+  _sceneTransform->postMult(osg::Matrix(glm::value_ptr(modelMatrix)));
+
   _frameStamp->setFrameNumber(frameNumber);
   _frameStamp->setReferenceTime(currentTime);
   _frameStamp->setSimulationTime(currentTime);
@@ -60,9 +89,9 @@ void Renderer::update(double currentTime, unsigned int frameNumber)
   }
 }
 
-void Renderer::setProjectionMatrix(osg::Matrix mat)
+void Renderer::setProjectionMatrix(glm::mat4 mat)
 {
-  _projectionMatrix = mat;
+  _projectionMatrix = osg::Matrix(glm::value_ptr(mat));
 }
 
 void Renderer::setPixelCoords(int vp1, int vp2, int vp3, int vp4)
@@ -76,4 +105,42 @@ void Renderer::setPixelCoords(int vp1, int vp2, int vp3, int vp4)
 void Renderer::addObject()
 {
 
+}
+
+void Renderer::setSceneTransform(glm::mat4 transform)
+{
+  _sceneTransform->setMatrix(osg::Matrixd(glm::value_ptr(transform)));
+}
+
+void Renderer::tempSetUpLight()
+{
+  osg::Light * light0 = new osg::Light;
+  osg::Light * light1 = new osg::Light;
+  osg::LightSource* lightSource0 = new osg::LightSource;
+  osg::LightSource* lightSource1 = new osg::LightSource;
+
+  light0->setLightNum( 0 );
+  light0->setPosition( osg::Vec4( 5.0f, 5.0f, 10.0f, 1.0f ) );
+  light0->setAmbient( osg::Vec4( 0.3f, 0.3f, 0.3f, 1.0f ) );
+  light0->setDiffuse( osg::Vec4( 0.8f, 0.8f, 0.8f, 1.0f ) );
+  light0->setSpecular( osg::Vec4( 0.1f, 0.1f, 0.1f, 1.0f ) );
+  light0->setConstantAttenuation( 1.0f );
+
+  lightSource0->setLight( light0 );
+    lightSource0->setLocalStateSetModes( osg::StateAttribute::ON );
+  lightSource0->setStateSetModes( *(_root->getOrCreateStateSet()), osg::StateAttribute::ON );
+
+  light1->setLightNum( 1 );
+  light1->setPosition( osg::Vec4( -5.0f, -2.0f, 10.0f, 1.0f ) );
+  light1->setAmbient( osg::Vec4( 0.2f, 0.2f, 0.2f, 1.0f ) );
+  light1->setDiffuse( osg::Vec4( 0.5f, 0.5f, 0.5f, 1.0f ) );
+  light1->setSpecular( osg::Vec4( 0.2f, 0.2f, 0.2f, 1.0f ) );
+  light1->setConstantAttenuation( 1.0f );
+
+  lightSource1->setLight( light1 );
+    lightSource1->setLocalStateSetModes( osg::StateAttribute::ON );
+  lightSource1->setStateSetModes( *(_root->getOrCreateStateSet()), osg::StateAttribute::ON );
+
+  _root->addChild( lightSource0 );
+  _root->addChild( lightSource1 );
 }

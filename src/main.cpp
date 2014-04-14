@@ -4,6 +4,8 @@
 #include "core/Renderer.h"
 #include "core/Input.h"
 
+#include <iostream>
+
 void draw();
 void preSync();
 void postSyncPreDraw();
@@ -26,8 +28,8 @@ int main(int argc, char *argv[])
   _engine = new sgct::Engine(argc, argv);
 
   _renderer = new Renderer();
-  _physics = new Physics();
   _input = new Input();
+  _physics = new Physics(_input);
 
   _engine->setDrawFunction(draw);
   _engine->setPreSyncFunction(preSync);
@@ -64,23 +66,35 @@ void draw()
 
 void preSync()
 {
+  
+
   if (_engine->isMaster())
   {
     _currentTime.setVal(sgct::Engine::getTime());
     double xPos, yPos;
     sgct::Engine::getMousePos(_engine->getFocusedWindowIndex(), &xPos, &yPos);
     _input->setMousePosition(xPos, yPos);
+
+    int mousePos[2];
+    int resolution[2];
+    mousePos[0] = xPos;
+    mousePos[1] = yPos;
+    resolution[0] = _engine->getActiveXResolution();
+    resolution[1] = _engine->getActiveYResolution();
+    _physics->updatePreSync(mousePos, resolution, sgct::Engine::getUserPtr()->getPos());
+    _renderer->setSceneTransform(_physics->getPlayerTransform());
   }
   
 }
 
 void postSyncPreDraw()
 {
-  _renderer->setProjectionMatrix(osg::Matrix( glm::value_ptr(_engine->getActiveViewProjectionMatrix())));
+  _renderer->setProjectionMatrix(_engine->getActiveViewProjectionMatrix());
   const int* curr_vp = _engine->getActiveViewportPixelCoords();
   _renderer->setPixelCoords(curr_vp[0], curr_vp[1], curr_vp[2], curr_vp[3]);
 
-  _renderer->update(_currentTime.getVal(), _engine->getCurrentFrameNumber());
+  _physics->updatePostSync(_engine->getDt());
+  _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
 
 }
 

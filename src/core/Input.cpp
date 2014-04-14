@@ -19,25 +19,25 @@ void Input::keyCallback(const int& key, const int& action)
   {
     case 'W':
     {
-      _commandStates[FORWARD] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);   
+      _commandStates[FORWARD] = ((action == REPEAT || action == PRESS) ? true : false);   
       break;
     }
 
     case 'A':
     {
-      _commandStates[LEFT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);  
+      _commandStates[LEFT] = ((action == REPEAT || action == PRESS) ? true : false);  
       break;
     }
 
     case 'S':
     {
-      _commandStates[BACKWARD] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);  
+      _commandStates[BACKWARD] = ((action == REPEAT || action == PRESS) ? true : false);  
       break;
     }
 
     case 'D':
     {
-      _commandStates[RIGHT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);  
+      _commandStates[RIGHT] = ((action == REPEAT || action == PRESS) ? true : false);  
       break;
     }
   }

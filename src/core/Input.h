@@ -3,14 +3,13 @@
 
 #include <iostream>
 
-#include "sgct.h"
-
 class Input
 {
 
   public:
     enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3};
     static const int NR_OF_COMMANDS = 4;
+    static const int REPEAT = 2, PRESS = 1;
     
     Input();
     ~Input();
