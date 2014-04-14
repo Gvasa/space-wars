@@ -301,6 +301,9 @@ void clientCallback(const char * receivedChars, int size, int clientId)
       std::string fileName(receivedChars + 6, receivedChars + size);
       addModel(fileName);
 
+    }else if (strncmp(receivedChars, "delete", 6) == 0)
+    {
+      _modelTransforms.at(selectedModel)->setNodeMask(0x0);
     }else if (strncmp(receivedChars, "positionX", 9) == 0)
     {
       std::string tmp(receivedChars + 10, receivedChars + size);

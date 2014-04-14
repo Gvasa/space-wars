@@ -17,14 +17,12 @@ JsonParseStatus parseJsonFile(std::string fileName, JsonValue& value)
   return status;
 }
 
-double sum_and_print(JsonValue o)
+void print(JsonValue o)
 {
-    double sum = 0;
     switch (o.getTag())
     {
         case JSON_TAG_NUMBER:
             printf("%g\n", o.toNumber());
-            sum += o.toNumber();
             break;
         case JSON_TAG_BOOL:
             printf("%s\n", o.toBool() ? "true" : "false");
@@ -35,21 +33,21 @@ double sum_and_print(JsonValue o)
         case JSON_TAG_ARRAY:
             for (auto i : o)
             {
-                sum += sum_and_print(i->value);
+                print(i->value);
             }
             break;
         case JSON_TAG_OBJECT:
             for (auto i : o)
             {
                 printf("%s = ", i->key);
-                sum += sum_and_print(i->value);
+                print(i->value);
             }
             break;
         case JSON_TAG_NULL:
             printf("null\n");
             break;
     }
-    return sum;
 }
+
 
   

@@ -10,7 +10,7 @@
 
 JsonParseStatus parseJsonFile(std::string fileName, JsonValue& value);
 
-double sum_and_print(JsonValue o);
+void print(JsonValue o);
 
 
 #endif
