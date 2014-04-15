@@ -8,6 +8,8 @@
 
 class Physics
 {
+
+// friend void tickCallback(btDynamicsWorld * world, btScalar timestep);
   public:
     Physics(Input* input);
     ~Physics();
@@ -18,6 +20,10 @@ class Physics
     void updatePostSync(double dt);
 
     glm::mat4 getPlayerTransform();
+
+    // static btRigidBody* getPlayer() {
+    //     return _playerRigidBody;};
+    
 
   private:
     btBroadphaseInterface* _broadphase;
@@ -31,8 +37,10 @@ class Physics
     btRigidBody* _playerRigidBody;
 
     float _speed = 10.0f;
+    float _angle = 0.0f;
     glm::mat4 _playerTransform;
     Input* _input;
+    
 };
 
 #endif

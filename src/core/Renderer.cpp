@@ -32,7 +32,7 @@ Renderer::Renderer()
   int size = 1000;
   for(int x = -(size/2); x < (size/2); x++)
   {
-    osg::Box* gridCube = new osg::Box( osg::Vec3(x,-1,0), 0.05, 0.05, size);
+    osg::Box* gridCube = new osg::Box( osg::Vec3(x,-1,0), 0.06, 0.06, size);
     osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
     gridCubeDrawable->computeBound();
     osg::Geode* gridShapesGeode = new osg::Geode();
@@ -42,7 +42,7 @@ Renderer::Renderer()
  
   for(int z = -(size/2); z < (size/2); z++)
   {
-    osg::Box* gridCube = new osg::Box( osg::Vec3(0,-1,z), size, 0.05, 0.05);
+    osg::Box* gridCube = new osg::Box( osg::Vec3(0,-1,z), size, 0.06, 0.06);
     osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
     osg::Geode* gridShapesGeode = new osg::Geode();
     gridShapesGeode->addDrawable(gridCubeDrawable);

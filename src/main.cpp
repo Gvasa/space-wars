@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
+  _engine->getActiveWindowPtr()->setNumberOfAASamples(16);
+
   _engine->render();
 
   delete _engine;

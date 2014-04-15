@@ -1,5 +1,16 @@
 #include "Physics.h"
 
+// void tickCallback(btDynamicsWorld * world, btScalar timestep)
+// {
+//   // btVector3 velocity = _playerRigidBody->getLinearVelocity();
+//   // btScalar speed = velocity.length();
+//   // if(speed > 15)
+//   // {
+//   //   velocity *= 15/speed;
+//   //   _playerRigidBody->setLinearVelocity(velocity);
+//   // }
+// }
+
 Physics::Physics(Input* input)
 {
   _input = input;
@@ -8,12 +19,18 @@ Physics::Physics(Input* input)
   _dispatcher = new btCollisionDispatcher(_collisionConfiguration);
   _solver = new btSequentialImpulseConstraintSolver();
   _dynamicsWorld = new btDiscreteDynamicsWorld(_dispatcher,_broadphase,_solver,_collisionConfiguration);
+  _dynamicsWorld->setGravity(btVector3(0,0,0));
 
   _playerShape = new btSphereShape(1);
   _playerMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,0)));
-  _playerRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(10, _playerMotionState, _playerShape, btVector3(0,0,0)));
+  _playerRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _playerMotionState, _playerShape, btVector3(0,0,0)));
 
   _dynamicsWorld->addRigidBody(_playerRigidBody);
+
+  // void (Physics::*callbackPtr) (btDynamicsWorld*, btScalar);
+  // callbackPtr = &Physics::tickCallback;
+  // _dynamicsWorld->setInternalTickCallback(tickCallback);
+
 }
 
 Physics::~Physics()
@@ -47,11 +64,12 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos)
   else 
     mouseDy = mouseDy/400;
 
-  mouseDx *= 100;
-  mouseDy *= 100;
+  // mouseDx *= 100;
+  // mouseDy *= 100;
 
   // _playerRigidBody->applyForce(btVector3(mouseDy,0.0,0.0), btVector3(0,0,100));
   // _playerRigidBody->applyForce(btVector3(0.0,mouseDx,0.0), btVector3(0,0,100));
+  // _playerRigidBody->setAngularVelocity(btVector3(mouseDy,mouseDx,0.0));
 
   btTransform tmpTrans;
   _playerRigidBody->getMotionState()->getWorldTransform(tmpTrans);
@@ -76,7 +94,18 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos)
       _speed -= 0.5;
   }
 
-  _playerRigidBody->applyCentralForce(swutils::glmVec3ToBulletVec3(glm::normalize(glm::vec3(1,0,0))*_speed*1.0f));
+  if(_input->getCommandState(_input->RIGHT)){
+    if(_angle < 15)
+      _angle += 0.5;
+  }
+
+  if(_input->getCommandState(_input->LEFT)){
+    if(_angle > -15)
+      _angle -= 0.5;
+  }
+  _playerRigidBody->setAngularVelocity(btVector3(mouseDy,mouseDx, _angle));
+
+  _playerRigidBody->applyCentralForce(swutils::glmVec3ToBulletVec3(glm::normalize(lookAt)*_speed));
 
   glm::mat4 translationMatrix = glm::translate( glm::mat4(1.0f), glm::vec3(worldTrans.x(),worldTrans.y(),worldTrans.z()));
 
@@ -90,6 +119,14 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos)
 void Physics::updatePostSync(double dt)
 {
   _dynamicsWorld->stepSimulation(dt,100);
+
+  btVector3 velocity = _playerRigidBody->getLinearVelocity();
+  btScalar speed = velocity.length();
+  if(speed > 15)
+  {
+    velocity *= 15/speed;
+    _playerRigidBody->setLinearVelocity(velocity);
+  }
 }
 
 void Physics::setGravity(float x, float y, float z)
@@ -101,3 +138,4 @@ glm::mat4 Physics::getPlayerTransform()
 {
   return _playerTransform;
 }
+
