@@ -21,9 +21,9 @@ Physics::Physics(Input* input)
   _dynamicsWorld = new btDiscreteDynamicsWorld(_dispatcher,_broadphase,_solver,_collisionConfiguration);
   _dynamicsWorld->setGravity(btVector3(0,0,0));
 
-  _playerShape = new btSphereShape(1);
+  _playerShape = new btBoxShape(btVector3(1,1,1));
   _playerMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,0)));
-  _playerRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _playerMotionState, _playerShape, btVector3(0,0,0)));
+  _playerRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _playerMotionState, _playerShape, btVector3(1,1,1)));
 
   _dynamicsWorld->addRigidBody(_playerRigidBody);
 
@@ -42,12 +42,12 @@ Physics::~Physics()
   delete _broadphase;
 }
 
-void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos)
+void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos, double dt)
 {
   double mouseDx = mousePos[0] - resolution[0]/2.0f;
   double mouseDy = mousePos[1] - resolution[1]/2.0f;
 
-  if(abs(mouseDx) < 20){      
+  if(abs(mouseDx) < 100){      
       mouseDx = 0;      
   } 
   else if(abs(mouseDx) > 400){
@@ -56,20 +56,35 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos)
   else
     mouseDx = mouseDx/400*-1;
 
-  if(abs(mouseDy) < 20)
+  if(abs(mouseDy) < 100)
     mouseDy = 0;
   else if(abs(mouseDy) > 400){
     mouseDy = (mouseDy < 0) ? -1 : 1;
   }
   else 
-    mouseDy = mouseDy/400;
+    mouseDy = mouseDy/400*-1;
 
   // mouseDx *= 100;
-  // mouseDy *= 100;
+   mouseDy *= 0.1;
 
-  // _playerRigidBody->applyForce(btVector3(mouseDy,0.0,0.0), btVector3(0,0,100));
-  // _playerRigidBody->applyForce(btVector3(0.0,mouseDx,0.0), btVector3(0,0,100));
-  // _playerRigidBody->setAngularVelocity(btVector3(mouseDy,mouseDx,0.0));
+  // std::cout << mouseDx << " " << mouseDy << std::endl;
+  if (mouseDy == 0 && _playerRigidBody->getAngularVelocity().x() > 0)
+  //  _playerRigidBody->applyTorque(btVector3(0,-0.1f,0));
+  if (mouseDy == 0 && _playerRigidBody->getAngularVelocity().x() < 0)
+  //  _playerRigidBody->applyTorque(btVector3(0,0.1f,0));
+
+  if (mouseDx == 0 && _playerRigidBody->getAngularVelocity().y() > 0){
+    // std::cout << "greater than" << std::endl;
+    _playerRigidBody->applyTorque(btVector3(0,-0.5f,0));
+  }
+  if (mouseDx == 0 && _playerRigidBody->getAngularVelocity().y() < 0){
+    // std::cout << "less than" << std::endl;
+    _playerRigidBody->applyTorque(btVector3(0,0.5f,0));
+  }
+  if (mouseDx !=0 || mouseDy != 0)
+    _playerRigidBody->applyTorque(btVector3(mouseDy,mouseDx,0));
+  // std::cout << "Tor: " << _playerRigidBody->getTotalTorque().x() << ' ' << _playerRigidBody->getTotalTorque().y() << std::endl << std::endl;
+  // std::cout << "Ang: " << _playerRigidBody->getAngularVelocity().x() << ' ' << _playerRigidBody->getAngularVelocity().y() << std::endl << std::endl;
 
   btTransform tmpTrans;
   _playerRigidBody->getMotionState()->getWorldTransform(tmpTrans);
@@ -103,7 +118,7 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos)
     if(_angle > -15)
       _angle -= 0.5;
   }
-  _playerRigidBody->setAngularVelocity(btVector3(mouseDy,mouseDx, _angle));
+  // _playerRigidBody->setAngularVelocity(btVector3(mouseDy,mouseDx, _angle));
 
   _playerRigidBody->applyCentralForce(swutils::glmVec3ToBulletVec3(glm::normalize(lookAt)*_speed));
 
@@ -114,10 +129,7 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos)
   // cameraTrans *= translationMatrix;
   cameraTrans *= glm::translate(glm::mat4(1.0f), -playerPos);
   _playerTransform = cameraTrans;
-}
 
-void Physics::updatePostSync(double dt)
-{
   _dynamicsWorld->stepSimulation(dt,100);
 
   btVector3 velocity = _playerRigidBody->getLinearVelocity();
@@ -127,6 +139,11 @@ void Physics::updatePostSync(double dt)
     velocity *= 15/speed;
     _playerRigidBody->setLinearVelocity(velocity);
   }
+}
+
+void Physics::updatePostSync(double dt)
+{
+  
 }
 
 void Physics::setGravity(float x, float y, float z)

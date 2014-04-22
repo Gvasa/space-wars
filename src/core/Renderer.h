@@ -15,31 +15,65 @@
 #include <osg/Texture2D>
 #include <osg/TexGen>
 
+
+//! Handles the games scene graph.
+/*!
+  Contains the OSG scene-graph and connects it to the SGCT window.  
+*/
+
 class Renderer
 {
   public:
+    //! Constructor that initializes the OSG-viewer and creates the root node.
     Renderer();
+
+    //! Basic destructor that removes dynamically allocated resources.
     ~Renderer();
     
+    //! Renders the current scene-graph.
     void render();
+
+    //! Update that occurs before sgct sync. 
     void updatePreSync(double currentTime);
+
+    //! Update that occurs after sgct sync. 
+    /*!
+        Called from main loop to make sure that all sgct configuration is correct.
+        \param currentTime The time currently given by sgct.
+        \param frameNumber The framenumber currently given by sgct.
+        \param modelMatrix The config matrix given by sgct.
+    */
     void updatePostSync(double currentTime,  unsigned int frameNumber, glm::mat4 modelMatrix);
 
+    //! Sets the projection matrix used for rendering.
+    /*!
+        This function should be called when the game starts or when the projection matix changes. 
+        \param mat The projection matrix. Should be given by sgct.
+    */
     void setProjectionMatrix(glm::mat4 mat);
+
+    //! Sets the pixel coordinates used for rendering. 
+    /*!
+        The pixel coordinates are given by the sgct getActiveViewportPixelCoords() function.  
+    */
     void setPixelCoords(int vp1, int vp2, int vp3, int vp4);
-    void addObject();
+    //! Sets the scene transform used for rendering. 
+    /*!
+        The scene transform moves the world around the player and should be given by the physics engine. 
+    */
     void setSceneTransform(glm::mat4 transform);
 
+    //! Test functions that sets up a few test lights.
     void tempSetUpLight();
 
   private:
-    osgViewer::Viewer* _viewer;
-    osg::ref_ptr<osg::Group> _root;
-    osg::ref_ptr<osg::MatrixTransform> _sceneTransform;
-    osg::ref_ptr<osg::FrameStamp> _frameStamp;
+    osgViewer::Viewer* _viewer; //!< The osg viewer connected to sgct.
+    osg::ref_ptr<osg::Group> _root; //!< The root of the scene graph.
+    osg::ref_ptr<osg::MatrixTransform> _sceneTransform; //!< The top transform of the scene graph that controls camera player movement. 
+    osg::ref_ptr<osg::FrameStamp> _frameStamp; //!< Framestamp that needs to be synced between sgct and osg.
 
-    osg::Matrix _projectionMatrix;
-    int* _pixelCoords;
+    osg::Matrix _projectionMatrix; //!< The projection matrox used for rendering.
+    int* _pixelCoords;  //!< A four slot integer array that holds the current viewport coordinate. 
 };
 
 #endif

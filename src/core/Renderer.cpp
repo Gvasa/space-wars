@@ -50,6 +50,8 @@ Renderer::Renderer()
   }
 
   _root->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+
+  tempSetUpLight();
 }
 
 Renderer::~Renderer()
@@ -61,6 +63,7 @@ Renderer::~Renderer()
 void Renderer::render()
 {
   _viewer->getCamera()->setViewport(_pixelCoords[0], _pixelCoords[1], _pixelCoords[2], _pixelCoords[3]);
+  // std::cout << _pixelCoords[0] << " " << _pixelCoords[1] << " " << _pixelCoords[2] << " "  << _pixelCoords[3] << std::endl;
   _viewer->getCamera()->setProjectionMatrix(_projectionMatrix);
 
   _viewer->renderingTraversals();
@@ -100,11 +103,6 @@ void Renderer::setPixelCoords(int vp1, int vp2, int vp3, int vp4)
   _pixelCoords[1] = vp2;
   _pixelCoords[2] = vp3;
   _pixelCoords[3] = vp4;
-}
-
-void Renderer::addObject()
-{
-
 }
 
 void Renderer::setSceneTransform(glm::mat4 transform)

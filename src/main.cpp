@@ -21,6 +21,7 @@ Physics* _physics;
 Input* _input;
 
 sgct::SharedDouble _currentTime(0.0);
+sgct::SharedObject<glm::mat4> _sceneTransform;
 
 int main(int argc, char *argv[])
 {
@@ -63,6 +64,9 @@ int main(int argc, char *argv[])
 
 void draw()
 {
+  const int* curr_vp = _engine->getActiveViewportPixelCoords();
+  _renderer->setPixelCoords(curr_vp[0], curr_vp[1], curr_vp[2], curr_vp[3]);
+  _renderer->setProjectionMatrix(_engine->getActiveViewProjectionMatrix());
   _renderer->render();
 }
 
@@ -83,17 +87,15 @@ void preSync()
     mousePos[1] = yPos;
     resolution[0] = _engine->getActiveXResolution();
     resolution[1] = _engine->getActiveYResolution();
-    _physics->updatePreSync(mousePos, resolution, sgct::Engine::getUserPtr()->getPos());
-    _renderer->setSceneTransform(_physics->getPlayerTransform());
+    _physics->updatePreSync(mousePos, resolution, sgct::Engine::getUserPtr()->getPos(), _engine->getDt());
+    _sceneTransform.setVal(_physics->getPlayerTransform());
   }
   
 }
 
 void postSyncPreDraw()
 {
-  _renderer->setProjectionMatrix(_engine->getActiveViewProjectionMatrix());
-  const int* curr_vp = _engine->getActiveViewportPixelCoords();
-  _renderer->setPixelCoords(curr_vp[0], curr_vp[1], curr_vp[2], curr_vp[3]);
+  _renderer->setSceneTransform(_sceneTransform.getVal());
 
   _physics->updatePostSync(_engine->getDt());
   _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
@@ -102,17 +104,19 @@ void postSyncPreDraw()
 
 void init()
 {
-  // _renderer->addObject("mothership.json");
+
 }
 
 void encode()
 {
   sgct::SharedData::instance()->writeDouble(&_currentTime);
+  sgct::SharedData::instance()->writeObj(&_sceneTransform);
 }
 
 void decode()
 {
   sgct::SharedData::instance()->readDouble(&_currentTime);
+  sgct::SharedData::instance()->readObj(&_sceneTransform);
 }
 
 void keyCallback(int key, int action)
