@@ -21,10 +21,12 @@ Physics::Physics(Input* input)
   _dynamicsWorld = new btDiscreteDynamicsWorld(_dispatcher,_broadphase,_solver,_collisionConfiguration);
   _dynamicsWorld->setGravity(btVector3(0,0,0));
 
-  _playerShape = new btBoxShape(btVector3(1,1,1));
-  _playerMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,0)));
+  _playerShape = new btBoxShape(btVector3(1.0f,1.0f,1.0f));
+  _playerMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,5,0)));
   _playerRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _playerMotionState, _playerShape, btVector3(1,1,1)));
 
+  setUpPlaneCollision();
+  _dynamicsWorld->addRigidBody(_planeRigidBody);
   _dynamicsWorld->addRigidBody(_playerRigidBody);
 
   // void (Physics::*callbackPtr) (btDynamicsWorld*, btScalar);
@@ -156,3 +158,12 @@ glm::mat4 Physics::getPlayerTransform()
   return _playerTransform;
 }
 
+void Physics::setUpPlaneCollision()
+{
+    _planeShape = new btStaticPlaneShape(btVector3(0, 1, 0), 0);
+    _staticMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,0)));
+    _planeRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(100,                  // mass
+        _staticMotionState,        // initial position
+        _planeShape,          // collision shape of body
+        btVector3(0,0,0)));
+}

@@ -22,7 +22,7 @@ class Physics
     //! Basic destructor that removes dynamically allocated resources.
     ~Physics();
 
-    //! Sets the gravity for the physics world.
+    //! Set the gravity for the physics world.
     /*!
         \param x X component of the gravity vector.
         \param y Y component of the gravity vector.
@@ -56,6 +56,9 @@ class Physics
     //     return _playerRigidBody;};
     
 
+    //! Test function for collision with ground plane.
+    void setUpPlaneCollision();
+
   private:
     btBroadphaseInterface* _broadphase;
     btDefaultCollisionConfiguration* _collisionConfiguration;
@@ -72,6 +75,11 @@ class Physics
     glm::mat4 _playerTransform;
     Input* _input;
     
+    // Test member for plane collision
+    btCollisionShape* _planeShape;
+    btDefaultMotionState* _staticMotionState;
+    btRigidBody* _planeRigidBody;
+
 };
 
 #endif
