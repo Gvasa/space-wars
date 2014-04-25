@@ -1,10 +1,17 @@
+#include <iostream>
+
 #include "sgct.h"
+#include <btBulletDynamicsCommon.h>
+#include <osgbDynamics/MotionState.h>
+#include <osgbCollision/CollisionShapes.h>
+#include <osgbDynamics/RigidBody.h>
+#include <osgDB/ReadFile>
+#include <osg/MatrixTransform>
+#include <osg/computeBoundsVisitor>
 
 #include "core/Physics.h"
 #include "core/Renderer.h"
 #include "core/Input.h"
-
-#include <iostream>
 
 void draw();
 void preSync();
@@ -100,11 +107,35 @@ void postSyncPreDraw()
   _physics->updatePostSync(_engine->getDt());
   _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
 
+  for (int i = 0; i < _physics->getNumberOfRigidBodies(); ++i)
+  {
+    _renderer->updateNode(i, _physics->getRigidBodyTransform(i));
+  }
 }
 
 void init()
 {
+  osg::ref_ptr<osg::Node> astroidNode;
+  astroidNode = osgDB::readNodeFile("assets/models/fighter.obj");
 
+  // osg::ref_ptr<osg::Node> fighterNode;
+  // fighterNode = osgDB::readNodeFile("assets/models/fighter.obj");
+
+  if (astroidNode.valid())
+  {
+    btCollisionShape* asteroidShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(astroidNode);
+
+    // btCollisionShape* fighterShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(fighterNode);
+
+     // _renderer->addNodeToScene(osgbCollision::osgNodeFromBtCollisionShape(asteroidShape));
+
+    // astroidTrans->addChild(astroidNode.get());
+    _renderer->addNodeToScene(astroidNode.get());
+    _physics->addCollisionShape(asteroidShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+
+    // _renderer->addNodeToScene(fighterNode.get());
+    // _physics->addCollisionShape(fighterShape, glm::translate( glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)));
+  }
 }
 
 void encode()

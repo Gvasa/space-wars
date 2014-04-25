@@ -26,7 +26,14 @@ Renderer::Renderer()
   _viewer->setSceneData(_root.get());
 
   _sceneTransform = new osg::MatrixTransform();
-  _root->addChild(_sceneTransform.get());
+
+  osg::ref_ptr<osgFX::Cartoon> cell_fx = new osgFX::Cartoon;
+  osg::ref_ptr<osgFX::SpecularHighlights> specular_fx = new osgFX::SpecularHighlights;
+  
+  specular_fx->addChild(cell_fx.get());
+  cell_fx->addChild(_sceneTransform.get());
+
+  _root->addChild(specular_fx);
 
 
   int size = 1000;
@@ -108,6 +115,24 @@ void Renderer::setPixelCoords(int vp1, int vp2, int vp3, int vp4)
 void Renderer::setSceneTransform(glm::mat4 transform)
 {
   _sceneTransform->setMatrix(osg::Matrixd(glm::value_ptr(transform)));
+}
+
+void Renderer::addNodeToScene(osg::Node* node)
+{
+  _transforms.push_back(new osg::MatrixTransform());
+  _transforms.back()->addChild(node);
+
+  _sceneTransform->addChild(_transforms.back());
+}
+
+void Renderer::updateNode(int i, glm::mat4 transform)
+{
+  _transforms[i]->setMatrix(osg::Matrix(glm::value_ptr(transform)));
+}
+
+void Renderer::updateNode(int i, osg::Matrix transform)
+{
+  _transforms[i]->setMatrix(transform);
 }
 
 void Renderer::tempSetUpLight()

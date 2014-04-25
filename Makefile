@@ -23,7 +23,7 @@ LIBDIR = -L"$(SELF_DIR)lib"
 INCDIR = -I"$(SELF_DIR)include" -I"$(SELF_DIR)include/Bullet" -I"$(SELF_DIR)src"
 
 # Specify libraries.
-LIBRARIES = -lenet  -lwinmm -lBulletDynamics -lBulletCollision -lLinearMath -lBulletSoftBody -losg -losgUtil -losgDB -losgGA -losgViewer -lsgct -lopengl32 -lglu32 -lgdi32 -lws2_32
+LIBRARIES = -lenet -lwinmm -losgbDynamics -losgbCollision -losgbInteraction -losg -losgUtil -losgDB -losgGA -losgViewer -losgFX -lsgct -lopengl32 -lglu32 -lgdi32 -lws2_32 -lBulletDynamics -lBulletCollision -lLinearMath -lBulletSoftBody
 
 compile: $(SRCDIR)
 	$(CXX) $(CXXFLAGS) $(SRCDIR) -o $(BINDIR)$(BINNAME) $(LIBDIR) $(INCDIR) $(LIBRARIES)

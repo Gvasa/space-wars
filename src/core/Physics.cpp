@@ -21,12 +21,25 @@ Physics::Physics(Input* input)
   _dynamicsWorld = new btDiscreteDynamicsWorld(_dispatcher,_broadphase,_solver,_collisionConfiguration);
   _dynamicsWorld->setGravity(btVector3(0,0,0));
 
-  _playerShape = new btBoxShape(btVector3(1.0f,1.0f,1.0f));
-  _playerMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,5,0)));
+  // Create player.
+  osg::ref_ptr<osg::Node> playerNode;
+  playerNode = osgDB::readNodeFile("assets/models/spaceship.3ds");
+  if (playerNode.valid())
+  {
+    std::cout << "Player model found." << std::endl;
+    osg::ComputeBoundsVisitor cbv;
+    osg::BoundingBox &bb(cbv.getBoundingBox());
+    playerNode->accept(cbv);
+
+    _playerShape = osgbCollision::btConvexHullCollisionShapeFromOSG(playerNode);
+  }
+
+  // _playerShape = new btBoxShape(btVector3(1.0f,1.0f,1.0f));
+  _playerMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,-5)));
   _playerRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _playerMotionState, _playerShape, btVector3(1,1,1)));
 
-  setUpPlaneCollision();
-  _dynamicsWorld->addRigidBody(_planeRigidBody);
+  // setUpPlaneCollision();
+  // _dynamicsWorld->addRigidBody(_planeRigidBody);
   _dynamicsWorld->addRigidBody(_playerRigidBody);
 
   // void (Physics::*callbackPtr) (btDynamicsWorld*, btScalar);
@@ -86,10 +99,12 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos,
   if (mouseDx !=0 || mouseDy != 0)
     _playerRigidBody->applyTorque(btVector3(mouseDy,mouseDx,0));
   // std::cout << "Tor: " << _playerRigidBody->getTotalTorque().x() << ' ' << _playerRigidBody->getTotalTorque().y() << std::endl << std::endl;
-  // std::cout << "Ang: " << _playerRigidBody->getAngularVelocity().x() << ' ' << _playerRigidBody->getAngularVelocity().y() << std::endl << std::endl;
+  // std::cout << "Angular: " << _playerRigidBody->getAngularVelocity().x() << ' ' << _playerRigidBody->getAngularVelocity().y() << std::endl << std::endl;
+  // std::cout << "Linear: " << _playerRigidBody->getLinearVelocity().x() << ' ' << _playerRigidBody->getLinearVelocity().y() << std::endl << std::endl;
+
 
   btTransform tmpTrans;
-  _playerRigidBody->getMotionState()->getWorldTransform(tmpTrans);
+  _playerMotionState->getWorldTransform(tmpTrans);
   btVector3 worldTrans = tmpTrans.getOrigin();
   btMatrix3x3 worldRotation = tmpTrans.getBasis();
 
@@ -97,7 +112,7 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos,
 
   glm::mat4 rotationMatrix = swutils::bulletMat3ToGlmMat4(worldRotation);
 
-  glm::vec4 view = glm::vec4(0,0,1,0) *rotationMatrix;
+  glm::vec4 view = glm::vec4(0,0,1,0) * rotationMatrix;
 
   glm::vec3 lookAt (view.x, view.y, view.z);
 
@@ -166,4 +181,46 @@ void Physics::setUpPlaneCollision()
         _staticMotionState,        // initial position
         _planeShape,          // collision shape of body
         btVector3(0,0,0)));
+}
+
+void Physics::addCollisionShape(btCollisionShape* shape, glm::mat4 transform)
+{
+  // _motionStates.push_back(new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,0))));
+
+  _motionStates.push_back(new osgbDynamics::MotionState());
+
+  _motionStates.back()->setParentTransform(osg::Matrix(glm::value_ptr(transform)));
+
+  _collisionShapes.push_back(shape);
+
+  _rigidBodies.push_back(new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _motionStates.back(), _collisionShapes.back(), btVector3(1,1,1))));
+
+  _dynamicsWorld->addRigidBody(_rigidBodies.back());
+}
+
+glm::mat4 Physics::getRigidBodyTransform(int i)
+{
+  btTransform transform;
+  _motionStates[i]->getWorldTransform(transform);
+
+  // return swutils::bulletTransToGlmMat4(transform);
+
+  btVector3 transVec = transform.getOrigin();
+  btMatrix3x3 rotMat = transform.getBasis();
+
+  glm::mat4 rotationMatrix = swutils::bulletMat3ToGlmMat4(rotMat);
+  glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(transVec.x(), transVec.y(), transVec.z()));
+
+  return rotationMatrix * translationMatrix;
+
+}
+
+osg::Matrix Physics::getRigidBodyTransformAsOsg(int i)
+{
+  return _motionStates[i]->computeOsgWorldToBulletWorld();
+}
+
+int Physics::getNumberOfRigidBodies()
+{
+  return _rigidBodies.size();
 }

@@ -1,7 +1,15 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
+#include <vector>
+
 #include <btBulletDynamicsCommon.h>
+#include <osgbDynamics/MotionState.h>
+#include <osgbCollision/CollisionShapes.h>
+#include <osgbDynamics/RigidBody.h>
+#include <osgDB/ReadFile>
+#include <osg/MatrixTransform>
+#include <osg/computeBoundsVisitor>
 
 #include "SwUtils.h"
 #include "Input.h"
@@ -59,6 +67,17 @@ class Physics
     //! Test function for collision with ground plane.
     void setUpPlaneCollision();
 
+    //! Adds a collision shape to the physics scene.
+    void addCollisionShape(btCollisionShape* shape, glm::mat4 transform);
+
+    //! Get transform for rigid body i.
+    glm::mat4 getRigidBodyTransform(int i);
+
+    //! Get transform for rigid body i as osg::Matrix.
+    osg::Matrix getRigidBodyTransformAsOsg(int i);
+
+    //! Get number of rigid bodies.
+    int getNumberOfRigidBodies();
   private:
     btBroadphaseInterface* _broadphase;
     btDefaultCollisionConfiguration* _collisionConfiguration;
@@ -75,6 +94,10 @@ class Physics
     glm::mat4 _playerTransform;
     Input* _input;
     
+    std::vector<btRigidBody*> _rigidBodies;
+    std::vector<btCollisionShape*> _collisionShapes;
+    std::vector<osgbDynamics::MotionState*> _motionStates;
+
     // Test member for plane collision
     btCollisionShape* _planeShape;
     btDefaultMotionState* _staticMotionState;

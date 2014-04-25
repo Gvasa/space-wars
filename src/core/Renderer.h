@@ -2,6 +2,7 @@
 #define RENDERER_H
 
 #include <iostream>
+#include <vector>
 
 #include "sgct.h"
 #include <glm/glm.hpp>
@@ -14,7 +15,12 @@
 #include <osg/ShapeDrawable>
 #include <osg/Texture2D>
 #include <osg/TexGen>
-
+#include <osgFX/Scribe>
+#include <osgFX/Cartoon>
+#include <osgFX/SpecularHighlights>
+#include <osgbDynamics/MotionState.h>
+#include <osgbCollision/CollisionShapes.h>
+#include <osgbDynamics/RigidBody.h>
 
 //! Handles the games scene graph.
 /*!
@@ -66,14 +72,26 @@ class Renderer
     //! Test functions that sets up a few test lights.
     void tempSetUpLight();
 
+    //! Adds a node to the scen transform.
+    void addNodeToScene(osg::Node* node);
+
+    //! Update transform of node with index i.
+    void updateNode(int i, glm::mat4 transform);
+    
+    //! Update transform of node with index i.
+    void updateNode(int i, osg::Matrix transform);
+  
   private:
     osgViewer::Viewer* _viewer; //!< The osg viewer connected to sgct.
     osg::ref_ptr<osg::Group> _root; //!< The root of the scene graph.
     osg::ref_ptr<osg::MatrixTransform> _sceneTransform; //!< The top transform of the scene graph that controls camera player movement. 
+    osg::ref_ptr<osg::MatrixTransform> _toBulletTransform; 
     osg::ref_ptr<osg::FrameStamp> _frameStamp; //!< Framestamp that needs to be synced between sgct and osg.
 
     osg::Matrix _projectionMatrix; //!< The projection matrox used for rendering.
     int* _pixelCoords;  //!< A four slot integer array that holds the current viewport coordinate. 
+
+    std::vector<osg::MatrixTransform*> _transforms;
 };
 
 #endif
