@@ -44,6 +44,7 @@ void myEncodeFun();
 void myDecodeFun();
 void myCleanUpFun();
 void keyCallback(int key, int action);
+void mouseCallback( int key, int action);
 
 //other functions
 void initOSG();
@@ -70,7 +71,7 @@ glm::vec3 pos(0.0f, 0.0f, 0.0f);
 
 //other var
 bool arrowButtons[6];
-enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT, LEFT_MOUSE, LASER };
+enum directions { FORWARD = 0, BACKWARD, LEFT, RIGHT, PROJECTILE, LASER };
 
 double mouseDx = 0.0;
 double mouseDy = 0.0;
@@ -101,6 +102,7 @@ int main( int argc, char* argv[] )
 	gEngine->setDrawFunction( myDrawFun );
 	gEngine->setCleanUpFunction( myCleanUpFun );
 	gEngine->setKeyboardCallbackFunction( keyCallback );
+	gEngine->setMouseButtonCallbackFunction( mouseCallback );
 
 	for(int i=0; i<4; i++)
 		arrowButtons[i] = false;
@@ -225,6 +227,8 @@ void myPreSyncFun()
 	{
 		curr_time.setVal( sgct::Engine::getTime() );
 
+		sgct::Engine::setMouseCursorVisibility(gEngine->getFocusedWindowIndex(), false);
+
 		int width, height;
 		width = gEngine->getActiveXResolution();
 		height = gEngine->getActiveYResolution();
@@ -280,21 +284,31 @@ void myPreSyncFun()
 
 
 		if( arrowButtons[LEFT] ){
+
 			if(vertRot < 90 && vertRot > -90)
-				pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+				pos -= ( (walkingSpeed-5.0f) * static_cast<float>(gEngine->getDt()) * right);
 			else
-				pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+				pos += ( (walkingSpeed-5.0f) * static_cast<float>(gEngine->getDt()) * right);
+		
 		}
 
 		if( arrowButtons[RIGHT] ){
+
 			if(vertRot < 90 && vertRot > -90)
-				pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+				pos += ( (walkingSpeed-5.0f) * static_cast<float>(gEngine->getDt()) * right);
 			else
-				pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * right);
+				pos -= ( (walkingSpeed-5.0f) * static_cast<float>(gEngine->getDt()) * right);
+
 		}
 
+		if(checklaser == 1){
 
-		if( arrowButtons[LEFT_MOUSE] && checktime+0.1 < sgct::Engine::getTime()){
+			mSceneTrans->removeChild(mSceneTrans->getChild(mSceneTrans->getNumChildren()-1));
+			checklaser = 0;
+
+		}
+
+		if( arrowButtons[PROJECTILE] && !arrowButtons[LASER] && checktime+0.1 < sgct::Engine::getTime()){
 
 			checktime = sgct::Engine::getTime();
 			projectiles.createProjectile(mSceneTrans, view, pos,  ViewMat, checktime2, positions, viewdirections, viewarrays);
@@ -305,15 +319,12 @@ void myPreSyncFun()
 
 		projectiles.removeProjectile(mSceneTrans, checktime2, positions, viewdirections, viewarrays);
 
-		if(checklaser == 1){
-			mSceneTrans->removeChild(mSceneTrans->getChild(mSceneTrans->getNumChildren()-1));
-			checklaser = 0;
-		}
 
-		if( arrowButtons[LASER] && !arrowButtons[LEFT_MOUSE]){
+		if( !arrowButtons[PROJECTILE] && arrowButtons[LASER]){
 
 			projectiles.createLaser(mSceneTrans, view, pos, ViewMat, checktime);
 			checklaser = 1;
+
 		}
 		
 		result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
@@ -324,7 +335,6 @@ void myPreSyncFun()
 
 		
 		mSceneTrans->setMatrix(osg::Matrixd(glm::value_ptr(result)));
-
 
 	}
 }
@@ -461,12 +471,28 @@ void keyCallback(int key, int action)
 			arrowButtons[RIGHT] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
 			break;
 
-		case SGCT_MOUSE_BUTTON_LEFT:
 		case SGCT_KEY_F:
-			arrowButtons[LEFT_MOUSE] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+			arrowButtons[PROJECTILE] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
 			break;
 
 		case SGCT_KEY_G:
+			arrowButtons[LASER] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+			break;
+		}
+	}
+}
+
+void mouseCallback(int key, int action){
+
+	if(gEngine->isMaster() ){
+
+		switch(key){
+
+		case SGCT_MOUSE_BUTTON_LEFT:
+			arrowButtons[PROJECTILE] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
+			break;
+
+		case SGCT_MOUSE_BUTTON_RIGHT:
 			arrowButtons[LASER] = ((action == SGCT_REPEAT || action == SGCT_PRESS) ? true : false);
 			break;
 		}

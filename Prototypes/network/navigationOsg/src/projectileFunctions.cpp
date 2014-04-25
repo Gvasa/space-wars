@@ -33,7 +33,7 @@ void projectileFunctions::createProjectile(osg::ref_ptr<osg::MatrixTransform> mS
 
 			if(laserpos % 2 != 0){
 
-				osg::Box* projectile = new osg::Box( osg::Vec3(-0.5f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
+				osg::Box* projectile = new osg::Box( osg::Vec3(-0.5f, -0.3f, 0.0f), 0.1f, 0.1f, 0.4f);
 				osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
 				projectileDrawable->setColor(osg::Vec4(0.0f, 0.0f, 1.0f, 0.5f));
 				projectileDrawable->computeBound();
@@ -53,7 +53,7 @@ void projectileFunctions::createProjectile(osg::ref_ptr<osg::MatrixTransform> mS
 			}
 			else{
 
-				osg::Box* projectile = new osg::Box( osg::Vec3(0.5f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
+				osg::Box* projectile = new osg::Box( osg::Vec3(0.5f, -0.3f, 0.0f), 0.1f, 0.1f, 0.4f);
 				osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
 				projectileDrawable->setColor(osg::Vec4(0.0f, 0.0f, 1.0f, 0.5f));
 				projectileDrawable->computeBound();
