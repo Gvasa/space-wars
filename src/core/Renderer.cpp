@@ -35,6 +35,8 @@ Renderer::Renderer()
 
   _root->addChild(specular_fx);
 
+  _gui = new Gui(1920, 1080);
+  _root->addChild(_gui);
 
   int size = 1000;
   for(int x = -(size/2); x < (size/2); x++)
@@ -77,13 +79,16 @@ void Renderer::render()
 
 }
 
-void Renderer::updatePreSync(double currentTime)
+void Renderer::updatePreSync(double currentTime, int* mousePos)
 {
-  
+  _mouseXpos = mousePos[0];
+  _mouseYpos = mousePos[1];
 }
 
 void Renderer::updatePostSync(double currentTime, unsigned int frameNumber, glm::mat4 modelMatrix)
 {
+  _gui->update(_mouseXpos, _mouseYpos);
+
   _sceneTransform->postMult(osg::Matrix(glm::value_ptr(modelMatrix)));
 
   _frameStamp->setFrameNumber(frameNumber);

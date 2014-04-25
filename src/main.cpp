@@ -53,7 +53,9 @@ int main(int argc, char *argv[])
     delete _engine;
     return EXIT_FAILURE;
   }
-
+  sgct::Engine::setMousePos(_engine->getFocusedWindowIndex(), _engine->getActiveXResolution()/2.0f, _engine->getActiveYResolution()/2.0f);
+  _engine->setDisplayInfoVisibility(true);
+  _engine->setMouseCursorVisibility(_engine->getFocusedWindowIndex(), false);
   _engine->getActiveWindowPtr()->setNumberOfAASamples(16);
 
   _engine->render();
@@ -96,6 +98,8 @@ void preSync()
     resolution[1] = _engine->getActiveYResolution();
     _physics->updatePreSync(mousePos, resolution, sgct::Engine::getUserPtr()->getPos(), _engine->getDt());
     _sceneTransform.setVal(_physics->getPlayerTransform());
+
+    _renderer->updatePreSync(_currentTime.getVal(), mousePos);
   }
   
 }

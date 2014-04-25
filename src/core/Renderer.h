@@ -22,6 +22,8 @@
 #include <osgbCollision/CollisionShapes.h>
 #include <osgbDynamics/RigidBody.h>
 
+#include "Gui.h"
+
 //! Handles the games scene graph.
 /*!
   Contains the OSG scene-graph and connects it to the SGCT window.  
@@ -40,7 +42,10 @@ class Renderer
     void render();
 
     //! Update that occurs before sgct sync. 
-    void updatePreSync(double currentTime);
+    /*!
+      \param mousePos The current mouse position given by sgct.
+    */
+    void updatePreSync(double currentTime, int* mousePos);
 
     //! Update that occurs after sgct sync. 
     /*!
@@ -92,6 +97,12 @@ class Renderer
     int* _pixelCoords;  //!< A four slot integer array that holds the current viewport coordinate. 
 
     std::vector<osg::MatrixTransform*> _transforms;
+
+    Gui* _gui;
+
+    int _mouseXpos;
+    int _mouseYpos;
+
 };
 
 #endif
