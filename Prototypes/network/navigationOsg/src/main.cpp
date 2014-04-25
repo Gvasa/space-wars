@@ -1,28 +1,29 @@
-#include "sgct.h"
-#include <iostream>
-#include <string>
-#include "enet/enet.h"
+// #include "sgct.h"
+// #include <iostream>
+// #include <string>
+// #include "enet/enet.h"
  
-#include <thread>
-#include <mutex>
-#include <osgViewer/Viewer>
-#include <osgDB/ReadFile>
-#include <osg/MatrixTransform>
-#include <osg/ComputeBoundsVisitor>
-#include <btBulletDynamicsCommon.h>
-#include <osg/TextureCubeMap>
-#include <osg/Shape>
-#include <osg/ShapeDrawable>
-#include <osg/Texture2D>
-#include <osg/TexGen>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+// #include <thread>
+// #include <mutex>
+// #include <osgViewer/Viewer>
+// #include <osgDB/ReadFile>
+// #include <osg/MatrixTransform>
+// #include <osg/ComputeBoundsVisitor>
+// #include <btBulletDynamicsCommon.h>
+// #include <osg/TextureCubeMap>
+// #include <osg/Shape>
+// #include <osg/ShapeDrawable>
+// #include <osg/Texture2D>
+// #include <osg/TexGen>
+// #include <glm/glm.hpp>
+// #include <glm/gtc/type_ptr.hpp>
+// #include <glm/gtc/matrix_transform.hpp>
  
-#include "skybox.h"
-#include "Package.h"
-#include "NavigationPackage.h"
-#include "set.cpp"
+// #include "skybox.h"
+// #include "Package.h"
+// #include "NavigationPackage.h"
+// #include "set.cpp"
+#include "projectileFunctions.h"
 
 sgct::Engine * gEngine;
 
@@ -43,7 +44,6 @@ void myEncodeFun();
 void myDecodeFun();
 void myCleanUpFun();
 void keyCallback(int key, int action);
-void printOsgMat(osg::Matrixd tmp);
 
 //other functions
 void initOSG();
@@ -51,8 +51,6 @@ void setupLightSource();
 
 //variables to share across cluster
 sgct::SharedDouble curr_time(0.0);
-sgct::SharedDouble dist(-2.0);
-sgct::SharedDouble sideways(0.0);
 sgct::SharedBool wireframe(false);
 sgct::SharedBool info(false);
 sgct::SharedBool stats(false);
@@ -62,16 +60,12 @@ sgct::SharedBool light(true);
 float rotationSpeed = 4.0f;
 float rollSpeed = 50.0f;
 float walkingSpeed = 10.0f;
-float projectile_speed = 50.0f;
 
 glm::mat4 result;
 
 glm::vec3 view(0.0f, 0.0f, 1.0f);
 glm::vec3 up(0.0f, 1.0f, 0.0f);
 glm::vec3 pos(0.0f, 0.0f, 0.0f);
-
-
-sgct::SharedObject<glm::mat4> xform;
 
 
 //other var
@@ -85,24 +79,17 @@ double mouseXPos = 0.0;
 double mouseYPos = 0.0;
 
 const int size = 1000;
-glm::vec3 viewdir;
-glm::vec3 projectilepos;
-glm::mat4 ViewArray;
 
 double checktime = 0.0;
 double checktime2[size];
 
-int checkchild;
 int checklaser = 0;
-int laserpos = 1;
-
-int numchild = 202;
-int i = 0;
-int j = 0;
 
 Set<glm::vec3> positions;
 Set<glm::vec3> viewdirections;
 Set<glm::mat4> viewarrays;
+
+projectileFunctions projectiles;
 
 int main( int argc, char* argv[] )
 {
@@ -267,12 +254,6 @@ void myPreSyncFun()
 			panRot = -180;
 		if(panRot < -180)
 			panRot = 180;
-		
-		// static float rollRot = 0.0f;
-
-		// std::cout << " panRot: " << panRot << std::endl;
-		// std::cout << " vertRot: " << vertRot << std::endl;
-
 
 		glm::mat4 ViewRotateX = glm::rotate(
 			glm::mat4(1.0f),
@@ -283,13 +264,8 @@ void myPreSyncFun()
 			glm::mat4(1.0f),
 			vertRot,
 			glm::vec3(1.0f, 0.0f, 0.0f)); //rotation around the x-axis
-			
-		// glm::mat4 ViewRotateZ = glm::rotate(
-		// 	glm::mat4(1.0f),
-		// 	rollRot,
-		// 	glm::vec3(0.0f, 0.0f, 1.0f)); //rotation around the z-axis
 		
-
+	
 		glm::mat4 ViewMat = ViewRotateY * ViewRotateX;
 		view = glm::inverse(glm::mat3(ViewMat)) * glm::vec3(0.0f, 0.0f, 1.0f);
 
@@ -298,6 +274,7 @@ void myPreSyncFun()
 
 		if( arrowButtons[FORWARD] )
 			pos += (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
+
 		if( arrowButtons[BACKWARD] )
 			pos -= (walkingSpeed * static_cast<float>(gEngine->getDt()) * view);
 
@@ -320,117 +297,13 @@ void myPreSyncFun()
 		if( arrowButtons[LEFT_MOUSE] && checktime+0.1 < sgct::Engine::getTime()){
 
 			checktime = sgct::Engine::getTime();
-
-			osg::MatrixTransform* trans = new osg::MatrixTransform;
-
-
-			if(laserpos % 2 != 0){
-
-				osg::Box* projectile = new osg::Box( osg::Vec3(-0.5f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
-				osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
-				projectileDrawable->computeBound();
-				osg::Geode* projectileGeode = new osg::Geode();
-				projectileGeode->addDrawable(projectileDrawable);
-				trans->addChild(projectileGeode);
-
-				projectilepos = glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f);
-
-				glm::mat4 temp =  glm::translate( glm::mat4(1.0f), projectilepos)
-								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-
-				laserpos++;
-
-				trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
-
-			}
-			else{
-
-				osg::Box* projectile = new osg::Box( osg::Vec3(0.5f, 0.0f, 0.0f), 0.1f, 0.1f, 0.4f);
-				osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
-				projectileDrawable->computeBound();
-				osg::Geode* projectileGeode = new osg::Geode();
-				projectileGeode->addDrawable(projectileDrawable);
-				trans->addChild(projectileGeode);
-				
-
-				projectilepos = glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f);
-
-				glm::mat4 temp =  glm::translate( glm::mat4(1.0f), projectilepos)
-								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-
-				laserpos++;
-
-				trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
-			}
-
+			projectiles.createProjectile(mSceneTrans, view, pos,  ViewMat, checktime2, positions, viewdirections, viewarrays);
 			
-			mSceneTrans->addChild(trans);
-
-			// checkchild = mSceneTrans->getChildIndex(trans);
-
-			// for(int p = 202; p < mSceneTrans->getNumChildren()-1; p++){
-			// 	std::cout << mSceneTrans->getNumChildren() << std::endl;
-			// }
-
-			viewdir = view;
-
-			ViewArray = ViewMat;
-
-			positions.add(projectilepos);
-			viewdirections.add(viewdir);
-			viewarrays.add(ViewArray);
-
-			// std::cout << checkchild << std::endl;
-			// std::cout << "i: " << i << std::endl;
-			checktime2[i] = sgct::Engine::getTime();
-			i++;
-			if(i == size)
-				i = 0;
 		}
 
+		projectiles.moveProjectile(mSceneTrans, gEngine, positions, viewdirections, viewarrays);
 
-		Set<glm::vec3>::Node* temp1 = positions.head->next;
-		Set<glm::vec3>::Node* temp2 = viewdirections.head->next;
-		Set<glm::mat4>::Node* temp3 = viewarrays.head->next;
-
-		for(int q = 202; q < mSceneTrans->getNumChildren(); q++){
-
-				
-
-				glm::mat4 tempen = glm::translate( glm::mat4(1.0f), temp1->pos)
-								 		* glm::inverse(temp3->pos) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-
-				mSceneTrans->getChild(q)->asTransform()->asMatrixTransform()->setMatrix(osg::Matrixd(glm::value_ptr(tempen)) );
-
-
-				// std::cout << k << std::endl;
-				// std::cout << mSceneTrans->getNumChildren()-203 << std::endl;
-
-				temp1->pos += (-temp2->pos * projectile_speed * static_cast<float>(gEngine->getDt()) );
-
-				temp1 = temp1->next;
-				temp2 = temp2->next;
-				temp3 = temp3->next;
-
-		}
-
-
-		if(checktime2[j] != 0.0 && checktime2[j]+10.0 < sgct::Engine::getTime()){
-			mSceneTrans->removeChild(numchild, 1);
-
-			// std::cout << "j: " << j << std::endl;
-			checktime2[j] = 0.0;
-
-			positions.remove();
-			viewdirections.remove();
-			viewarrays.remove();
-
-			j++;
-			if(j == size)
-				j = 0;
-	
-			// checktime2 = sgct::Engine::getTime();
-		}
+		projectiles.removeProjectile(mSceneTrans, checktime2, positions, viewdirections, viewarrays);
 
 		if(checklaser == 1){
 			mSceneTrans->removeChild(mSceneTrans->getChild(mSceneTrans->getNumChildren()-1));
@@ -439,28 +312,8 @@ void myPreSyncFun()
 
 		if( arrowButtons[LASER] && !arrowButtons[LEFT_MOUSE]){
 
-			checktime = sgct::Engine::getTime();
-
-
-			osg::Box* projectile = new osg::Box( osg::Vec3(0.0f, -0.3f, -250.0f), 0.1f, 0.1f, 500.0f);
-			osg::ShapeDrawable* projectileDrawable = new osg::ShapeDrawable(projectile);
-			projectileDrawable->computeBound();
-			osg::Geode* projectileGeode = new osg::Geode();
-			projectileGeode->addDrawable(projectileDrawable);
-
-			osg::MatrixTransform* trans = new osg::MatrixTransform;
-
-			trans->addChild(projectileGeode);
-
-
-			glm::mat4 temp =  glm::translate( glm::mat4(1.0f), glm::vec3(-view.x-pos.x, -view.y-pos.y, -view.z-pos.z+10.0f))
-								 * glm::inverse(ViewMat) * glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-
-			trans->setMatrix(osg::Matrixd(glm::value_ptr(temp)));
-			mSceneTrans->addChild(trans);
-
+			projectiles.createLaser(mSceneTrans, view, pos, ViewMat, checktime);
 			checklaser = 1;
-
 		}
 		
 		result = glm::translate( glm::mat4(1.0f), sgct::Engine::getUserPtr()->getPos() );
@@ -652,18 +505,4 @@ void setupLightSource()
 
 	mRootNode->addChild( lightSource0 );
 	mRootNode->addChild( lightSource1 );
-}
-
-
-void printOsgMat(osg::Matrixd tmp)
-{
-	std::cout << std::endl;    
-    std::cout << std::endl;
-    std::cout << tmp(0,0) << " " << tmp(0,1) << " " << tmp(0,2) << " " << tmp(0,3) << std::endl; 
-    std::cout << tmp(1,0) << " " << tmp(1,1) << " " << tmp(1,2) << " " << tmp(1,3) << std::endl;
-    std::cout << tmp(2,0) << " " << tmp(2,1) << " " << tmp(2,2) << " " << tmp(2,3) << std::endl;
-    std::cout << tmp(3,0) << " " << tmp(3,1) << " " << tmp(3,2) << " " << tmp(3,3) << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-
 }
