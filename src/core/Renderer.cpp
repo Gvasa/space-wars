@@ -36,6 +36,9 @@ Renderer::Renderer()
   _root->addChild(specular_fx);
 
   _gui = new Gui(1920, 1080);
+  _gui->addGuiObject(724,244,350,100,"assets/gui/hpskold.png");
+  _gui->addGuiObject(423,360,960,900,"assets/gui/character.png");
+  _gui->addText(50, 1550, 1000, "Game of Domes\nAlpha", "C:/Windows/Fonts/impact.ttf");
   _root->addChild(_gui);
 
   int size = 1000;

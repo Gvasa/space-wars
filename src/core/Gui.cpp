@@ -18,13 +18,13 @@ Gui::Gui(int width, int height)
 	HUDProjectionMatrix->setMatrix(osg::Matrix::ortho2D(0, _width, 0, _height));
 
 	// For the HUD model view matrix use an identity matrix:
-	osg::MatrixTransform* HUDModelViewMatrix = new osg::MatrixTransform;
-	HUDModelViewMatrix->setMatrix(osg::Matrix::identity());
+	_modelViewMatrix = new osg::MatrixTransform;
+	_modelViewMatrix->setMatrix(osg::Matrix::identity());
 	 
 
 	// Make sure the model view matrix is not affected by any transforms
 	// above it in the scene graph:
-	HUDModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+	_modelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 
 	// Add the HUD projection matrix as a child of the root node
 	// and the HUD model view matrix as a child of the projection matrix
@@ -32,13 +32,13 @@ Gui::Gui(int width, int height)
 	// and positioned with this model view matrix.
 	this->addChild(HUDProjectionMatrix);
 	
-	HUDProjectionMatrix->addChild(HUDModelViewMatrix);
+	HUDProjectionMatrix->addChild(_modelViewMatrix);
 
 	// Add the Geometry node to contain HUD geometry as a child of the
 	// HUD model view matrix.
 	crosshairTransform = new osg::MatrixTransform();
 
-	HUDModelViewMatrix->addChild( crosshairTransform );
+	_modelViewMatrix->addChild( crosshairTransform );
 	crosshairTransform->addChild(HUDGeode);
 	
 	// Set up geometry for the HUD and add it to the HUD
@@ -119,7 +119,7 @@ void Gui::update(int xPos, int yPos)
 	crosshairTransform->setMatrix(osg::Matrixd::translate(osg::Vec3f(xPos - _width/2, -(yPos - _height/2), 0.0f)));
 }
 
-void Gui::addGuiObject(int width, int height, int xPos, int yPos, std::string filename, float transparency)
+int Gui::addGuiObject(int width, int height, int xPos, int yPos, std::string filename, float transparency)
 {
 	_guiObjects.push_back(new osg::Geode());
 	_objectTransforms.push_back(new osg::MatrixTransform());
@@ -140,8 +140,60 @@ void Gui::addGuiObject(int width, int height, int xPos, int yPos, std::string fi
 	indecies->push_back(2);
 	indecies->push_back(3);
 
+	osg::Vec4Array* colors = new osg::Vec4Array();
+	colors->push_back(osg::Vec4(1,1,1,transparency));
+
+	osg::Vec2Array* texcoords = new osg::Vec2Array(4);
+	(*texcoords)[0].set(0.0f,0.0f);
+	(*texcoords)[1].set(1.0f,0.0f);
+	(*texcoords)[2].set(1.0f,1.0f);
+	(*texcoords)[3].set(0.0f,1.0f);
+
+	osg::Geometry* geometry = new osg::Geometry();
+	geometry->setTexCoordArray(0, texcoords);
 	
+	osg::Texture2D* texture = new osg::Texture2D();
+	texture->setDataVariance(osg::Object::DYNAMIC);
+	osg::Image* image;
+	image = osgDB::readImageFile(filename.c_str());
+	texture->setImage(image);
 
+	geometry->addPrimitiveSet( indecies );
+	geometry->setVertexArray( vertecies );
+	geometry->setColorArray( colors );
+	geometry->setColorBinding( osg::Geometry::BIND_OVERALL );
 
+	_guiObjects.back()->addDrawable(geometry);
 
+	osg::StateSet* stateSet = new osg::StateSet();
+	_guiObjects.back()->setStateSet(stateSet);
+	stateSet->setTextureAttributeAndModes(0,texture,osg::StateAttribute::ON);
+	stateSet->setMode(GL_BLEND,osg::StateAttribute::ON);
+	stateSet->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	stateSet->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
+	stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OVERRIDE | osg::StateAttribute::OFF );
+	stateSet->setRenderBinDetails( 11, "RenderBin");
+
+	_objectTransforms.back()->addChild(_guiObjects.back());
+	_modelViewMatrix->addChild(_objectTransforms.back());
+
+	return _guiObjects.size() - 1;
+}
+
+int Gui::addText(int fontSize, int xPos, int yPos, std::string text, std::string fontName)
+{
+	_textGeodes.push_back(new osg::Geode());
+	_textObjects.push_back(new osgText::Text());
+
+	_modelViewMatrix->addChild(_textGeodes.back());
+	_textGeodes.back()->addDrawable(_textObjects.back());
+
+	_textObjects.back()->setCharacterSize(fontSize);
+	_textObjects.back()->setFont(fontName.c_str());
+	_textObjects.back()->setText(text.c_str());
+	_textObjects.back()->setAxisAlignment(osgText::Text::SCREEN);
+	_textObjects.back()->setPosition( osg::Vec3(xPos, yPos, 0) );
+	_textObjects.back()->setColor( osg::Vec4(199, 77, 15, 1) );
+
+	return _textObjects.size() - 1;
 }

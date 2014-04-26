@@ -12,6 +12,7 @@
 #include "core/Physics.h"
 #include "core/Renderer.h"
 #include "core/Input.h"
+#include "core/Info.h"
 
 void draw();
 void preSync();
@@ -58,6 +59,8 @@ int main(int argc, char *argv[])
   _engine->setMouseCursorVisibility(_engine->getFocusedWindowIndex(), false);
   _engine->getActiveWindowPtr()->setNumberOfAASamples(16);
 
+
+
   _engine->render();
 
   delete _engine;
@@ -96,6 +99,8 @@ void preSync()
     mousePos[1] = yPos;
     resolution[0] = _engine->getActiveXResolution();
     resolution[1] = _engine->getActiveYResolution();
+    Info::setXresolution(resolution[0]);
+    Info::setYresolution(resolution[0]);
     _physics->updatePreSync(mousePos, resolution, sgct::Engine::getUserPtr()->getPos(), _engine->getDt());
     _sceneTransform.setVal(_physics->getPlayerTransform());
 
