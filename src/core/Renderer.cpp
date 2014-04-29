@@ -17,7 +17,7 @@ Renderer::Renderer()
 
   _viewer->getCamera()->setGraphicsContext(graphicsWindow.get());
 
-  _viewer->getCamera()->setComputeNearFarMode(osgUtil::CullVisitor::DO_NOT_COMPUTE_NEAR_FAR);
+  _viewer->getCamera()->setComputeNearFarMode(osgUtil::CullVisitor::DO_NOT_COMPUTE_NEAR_FAR); 
   _viewer->getCamera()->setClearColor(osg::Vec4( 0.0f, 0.0f, 0.0f, 0.0f));
 
   GLbitfield clearMask = _viewer->getCamera()->getClearMask();
@@ -35,11 +35,14 @@ Renderer::Renderer()
 
   _root->addChild(specular_fx);
 
-  _gui = new Gui(1920, 1080);
+  _gui = new Gui();
   _gui->addGuiObject(724,244,350,100,"assets/gui/hpskold.png");
   _gui->addGuiObject(423,360,960,900,"assets/gui/character.png");
   _gui->addText(50, 1550, 1000, "Game of Domes\nAlpha", "C:/Windows/Fonts/impact.ttf");
   _root->addChild(_gui);
+
+  _playerSpeedGuiTextIndex = _gui->addText(50, 10, 800, "0", "C:/Windows/Fonts/impact.ttf");
+  _playerVelocityGuiTextIndex = _gui->addText(50, 10, 600, "0", "C:/Windows/Fonts/impact.ttf");
 
   int size = 1000;
   for(int x = -(size/2); x < (size/2); x++)
@@ -91,6 +94,10 @@ void Renderer::updatePreSync(double currentTime, int* mousePos)
 void Renderer::updatePostSync(double currentTime, unsigned int frameNumber, glm::mat4 modelMatrix)
 {
   _gui->update(_mouseXpos, _mouseYpos);
+  _gui->changeText(_playerSpeedGuiTextIndex, std::to_string(Info::getPlayerSpeed()));
+
+  std::string playerVelocity = std::to_string(Info::getPlayerLinearVelocity().x) + "\n" + std::to_string(Info::getPlayerLinearVelocity().y) + "\n" + std::to_string(Info::getPlayerLinearVelocity().z) + "\n"; 
+  _gui->changeText(_playerVelocityGuiTextIndex, playerVelocity);
 
   _sceneTransform->postMult(osg::Matrix(glm::value_ptr(modelMatrix)));
 

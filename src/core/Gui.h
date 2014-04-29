@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 
 #include <osg/Group>
 #include <osg/Geode>
@@ -19,7 +20,7 @@ class Gui : public osg::Group
 {
 	public:
     //! Initializes the GUI given the resolution of the active window.
-  	Gui(int width, int height);
+  	Gui(int width = 1920, int height = 1080);
   	~Gui();
 
     //! Updates all GUI elements.
@@ -46,6 +47,21 @@ class Gui : public osg::Group
       \return Index of the added text
     */
     int addText(int fontSize, int xPos, int yPos, std::string text, std::string fontName);
+
+    //! Change the text of the text object with index i.
+    void changeText(int i, std::string text);
+
+    /**
+     * @brief Add a text GUI element from an obejct of type T.
+     * @details Takes a pointer to an obejct of type T and a pointer to a function that converts that object to a std::string. Using these two pointers this object is then displayed as a GUI text element. As long as the pointer remains non-NULL the text will update automatically.
+     * 
+     * @param xPos Position along the x-axis. 
+     * @param yPos Position along the y-axis
+     * @param textObject Pointer to the object that is to be displayed.
+     * @param toString Pointer to a function that converts an object of type T to a std::string.
+     */
+    template<typename T>
+    void addText(int xPos, int yPos, T* textObject, std::string (*toString) (T* obj), int fontSize = 25, std::string fontName = "");
 	
 	private:
 	 int currentRole;
@@ -60,7 +76,7 @@ class Gui : public osg::Group
    std::vector<osgText::Text*> _textObjects;
 
    osg::MatrixTransform* _modelViewMatrix;
-
+ 
 };
 
 

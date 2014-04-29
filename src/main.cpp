@@ -100,7 +100,7 @@ void preSync()
     resolution[0] = _engine->getActiveXResolution();
     resolution[1] = _engine->getActiveYResolution();
     Info::setXresolution(resolution[0]);
-    Info::setYresolution(resolution[0]);
+    Info::setYresolution(resolution[1]);
     _physics->updatePreSync(mousePos, resolution, sgct::Engine::getUserPtr()->getPos(), _engine->getDt());
     _sceneTransform.setVal(_physics->getPlayerTransform());
 
@@ -139,8 +139,8 @@ void init()
      // _renderer->addNodeToScene(osgbCollision::osgNodeFromBtCollisionShape(asteroidShape));
 
     // astroidTrans->addChild(astroidNode.get());
-    _renderer->addNodeToScene(astroidNode.get());
-    _physics->addCollisionShape(asteroidShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    // _renderer->addNodeToScene(astroidNode.get());
+    // _physics->addCollisionShape(asteroidShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
 
     // _renderer->addNodeToScene(fighterNode.get());
     // _physics->addCollisionShape(fighterShape, glm::translate( glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)));

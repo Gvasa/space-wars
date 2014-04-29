@@ -197,3 +197,14 @@ int Gui::addText(int fontSize, int xPos, int yPos, std::string text, std::string
 
 	return _textObjects.size() - 1;
 }
+
+void Gui::changeText(int i, std::string text)
+{
+	_textObjects[i]->setText(text.c_str());
+}
+
+template<typename T>
+void Gui::addText(int xPos, int yPos, T* textObject, std::string (*toString) (T* obj), int fontSize, std::string fontName)
+{
+	std::string hej = toString(textObject);
+}

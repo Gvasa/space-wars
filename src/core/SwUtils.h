@@ -1,6 +1,8 @@
 #ifndef SWUTILS_H
 #define SWUTILS_H
 
+#include <string>
+
 #include <btBulletDynamicsCommon.h>
 #include <osg/MatrixTransform>
 #include <glm/glm.hpp>
@@ -34,6 +36,16 @@ namespace swutils
         \return The resulting btVector3.
     */
     btVector3 glmVec3ToBulletVec3(glm::vec3 v);
+
+    /**
+     * @brief Converts a glm:vec2 to std::string.
+     * @details Converts the glm::vec2 pointed to by v to std::string. 
+     * 
+     * @param v Pointer to the object to be converted.
+     * @return The string representing the glm::vec2 pointed to by v.
+     */
+    std::string glmVec2PtrToString(glm::vec2* v);
+
 }
 
 #endif

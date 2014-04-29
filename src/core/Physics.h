@@ -13,6 +13,7 @@
 
 #include "SwUtils.h"
 #include "Input.h"
+#include "Info.h"
 
 //! The games physics engine.
 class Physics
@@ -20,6 +21,8 @@ class Physics
 
   //friend void tickCallback(btDynamicsWorld * world, btScalar timestep);
   public:
+    const glm::vec2 MAX_SPEED;
+    const glm::vec2 MIN_SPEED;
 
     //! Constructor that initializes all necessary parts of Bullet.
     /*!
@@ -89,7 +92,7 @@ class Physics
     btDefaultMotionState* _playerMotionState;
     btRigidBody* _playerRigidBody;
 
-    float _speed = 10.0f;
+    glm::vec2 _speed;
     float _angle = 0.0f;
     glm::mat4 _playerTransform;
     Input* _input;

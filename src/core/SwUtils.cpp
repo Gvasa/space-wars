@@ -58,3 +58,13 @@ btVector3 swutils::glmVec3ToBulletVec3(glm::vec3 v)
 {
     return btVector3(v.x,v.y,v.z);
 }
+
+std::string swutils::glmVec2PtrToString(glm::vec2* v)
+{
+    std::string str;
+    str += v->x;
+    str += " ";
+    str += v->y;
+
+    return str;
+}

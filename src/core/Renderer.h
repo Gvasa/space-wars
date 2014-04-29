@@ -23,6 +23,7 @@
 #include <osgbDynamics/RigidBody.h>
 
 #include "Gui.h"
+#include "Info.h"
 
 //! Handles the games scene graph.
 /*!
@@ -103,6 +104,8 @@ class Renderer
     int _mouseXpos;
     int _mouseYpos;
 
+    int _playerSpeedGuiTextIndex = 0;
+    int _playerVelocityGuiTextIndex = 0;
 };
 
 #endif
