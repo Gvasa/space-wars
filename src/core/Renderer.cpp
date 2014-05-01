@@ -44,6 +44,8 @@ Renderer::Renderer()
   _playerSpeedGuiTextIndex = _gui->addText(50, 10, 800, "0", "C:/Windows/Fonts/impact.ttf");
   _playerVelocityGuiTextIndex = _gui->addText(50, 10, 600, "0", "C:/Windows/Fonts/impact.ttf");
 
+  _playerAngularVelocityGuiIndex = _gui->addText(50, 900, 600, "0", "C:/Windows/Fonts/impact.ttf");
+
   int size = 1000;
   for(int x = -(size/2); x < (size/2); x++)
   {
@@ -96,8 +98,12 @@ void Renderer::updatePostSync(double currentTime, unsigned int frameNumber, glm:
   _gui->update(_mouseXpos, _mouseYpos);
   _gui->changeText(_playerSpeedGuiTextIndex, std::to_string(Info::getPlayerSpeed()));
 
+
   std::string playerVelocity = std::to_string(Info::getPlayerLinearVelocity().x) + "\n" + std::to_string(Info::getPlayerLinearVelocity().y) + "\n" + std::to_string(Info::getPlayerLinearVelocity().z) + "\n"; 
   _gui->changeText(_playerVelocityGuiTextIndex, playerVelocity);
+
+  std::string playerAngularVelocity = std::to_string(Info::getPlayerAngularVelocity().x) + "\n" + std::to_string(Info::getPlayerAngularVelocity().y) + "\n" + std::to_string(Info::getPlayerAngularVelocity().z) + "\n"; 
+  _gui->changeText(_playerAngularVelocityGuiIndex, playerAngularVelocity);
 
   _sceneTransform->postMult(osg::Matrix(glm::value_ptr(modelMatrix)));
 

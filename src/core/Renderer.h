@@ -106,6 +106,7 @@ class Renderer
 
     int _playerSpeedGuiTextIndex = 0;
     int _playerVelocityGuiTextIndex = 0;
+    int _playerAngularVelocityGuiIndex = 0;
 };
 
 #endif

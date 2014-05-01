@@ -103,11 +103,12 @@ void Physics::updatePostSync(double dt)
 
   std::cout << dx << " " << dy << std::endl;
   btVector3 btAngularVelocity = _playerRigidBody->getAngularVelocity();
-  glm::vec3 uAngular(dy - btAngularVelocity.x(), dx - btAngularVelocity.y(), 0);
+  glm::vec3 uAngular(dx - btAngularVelocity.x(), dy - btAngularVelocity.y(), 0);
   
   // _playerRigidBody->applyTorque(btVector3(uAngular.x, uAngular.y, 0));
 
   _playerRigidBody->applyForce(btVector3(0, 0, uAngular.y), btVector3(0,-1,0));
+  _playerRigidBody->applyForce(btVector3(0, 0, uAngular.x), btVector3(-1,0,0));
   
 
 
@@ -117,8 +118,9 @@ void Physics::updatePostSync(double dt)
   _playerTransform = swutils::bulletTransToGlmMat4(playerTransform);
 
 
-  btVector3 velocity = _playerRigidBody->getLinearVelocity();
-  Info::setPlayerLinearVelocity(glm::vec3(velocity.x(), velocity.y(), velocity.z()));
+  Info::setPlayerLinearVelocity(glm::vec3(btLinearVelocity.x(), btLinearVelocity.y(), btLinearVelocity.z()));
+  Info::setPlayerAngularVelocity(glm::vec3(btAngularVelocity.x(), btAngularVelocity.y(), btAngularVelocity.z()));
+  // Info::setPlayerAngularVelocity(uAngular);
 
   _dynamicsWorld->stepSimulation(dt,100);
 }
