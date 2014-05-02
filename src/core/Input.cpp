@@ -40,6 +40,18 @@ void Input::keyCallback(const int& key, const int& action)
       _commandStates[RIGHT] = ((action == REPEAT || action == PRESS) ? true : false);  
       break;
     }
+
+    case 'Q':
+    {
+      _commandStates[TILT_LEFT] = ((action == REPEAT || action == PRESS) ? true : false); 
+      break;
+    }
+
+    case 'E':
+    {
+      _commandStates[TILT_RIGHT] = ((action == REPEAT || action == PRESS) ? true : false); 
+      break;
+    }
   }
 }
 

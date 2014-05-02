@@ -9,7 +9,7 @@ class Input
 
   public:
     //! List of all available commands.
-    enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3};
+    enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, TILT_LEFT = 4, TILT_RIGHT = 5};
     
     //! Basic constructor. 
     Input();
@@ -47,7 +47,7 @@ class Input
     void getMousePosition(double& xPos, double& yPos);
 
   private:
-    static const int NR_OF_COMMANDS = 4;
+    static const int NR_OF_COMMANDS = 6;
     static const int REPEAT = 2, PRESS = 1;
     bool _commandStates[NR_OF_COMMANDS];
     double _xPosition = 0, _yPosition = 0;

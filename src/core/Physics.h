@@ -23,6 +23,8 @@ class Physics
   public:
     const glm::vec2 MAX_SPEED;
     const glm::vec2 MIN_SPEED;
+    const float MAX_TILT = 1.0f;
+    const float MIN_TILT = -1.0f;
 
     //! Constructor that initializes all necessary parts of Bullet.
     /*!
@@ -93,6 +95,7 @@ class Physics
     btRigidBody* _playerRigidBody;
 
     glm::vec2 _speed;
+    float _tilt = 0.0f;
     float _angle = 0.0f;
     glm::mat4 _playerTransform;
     Input* _input;

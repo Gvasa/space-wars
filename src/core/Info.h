@@ -50,13 +50,30 @@ class Info
     */
     static void setPlayerLinearVelocity(glm::vec3 linearVelocity) {_playerLinearVelocity = linearVelocity;}
 
+    /**
+     * @brief Set the player position given bu sgct.
+     * @details Used by main.
+     * 
+     * @param playerPosition The player position given by sgct.
+     */
+    static void setPlayerPosition(glm::vec3 playerPosition) { 
+        _playerPosition = playerPosition;}
+
+    /**
+     * @brief Get the position of the player.
+     * 
+     * @return The players position.
+     */
+    static glm::vec3 getPlayerPosition() {
+        return _playerPosition;}
   private:
     static int _xResolution;
     static int _yResolution;
 
     static float _playerSpeed;
     static glm::vec3 _playerAngularVelocity;
-    static glm::vec3 _playerLinearVelocity; 
+    static glm::vec3 _playerLinearVelocity;
+    static glm::vec3 _playerPosition; 
 };
 
 #endif

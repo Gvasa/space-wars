@@ -105,6 +105,8 @@ void preSync()
     _sceneTransform.setVal(_physics->getPlayerTransform());
 
     _renderer->updatePreSync(_currentTime.getVal(), mousePos);
+
+    Info::setPlayerPosition(sgct::Engine::getUserPtr()->getPos());
   }
   
 }

@@ -65,32 +65,66 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos,
 
 void Physics::updatePostSync(double dt)
 {
-  if (_input->getCommandState(_input->FORWARD))
+  btTransform playerTransform;
+  _playerMotionState->getWorldTransform(playerTransform);
+  btMatrix3x3 playerRotation = playerTransform.getBasis();
+  btVector3 playerTranslation = playerTransform.getOrigin();
+  // _playerTransform = swutils::bulletTransToGlmMat4(playerTransform);
+
+  glm::mat4 translationMatrix = glm::translate(glm::mat4(), glm::vec3(playerTranslation.x(), playerTranslation.y(), playerTranslation.z()));
+  glm::mat4 rotationMatrix = swutils::bulletMat3ToGlmMat4(playerRotation);
+  glm::vec3 playerPos = Info::getPlayerPosition();
+
+  glm::mat4 cameraTrans = glm::translate( glm::mat4(1.0f), playerPos);
+  cameraTrans *= rotationMatrix*translationMatrix;
+  cameraTrans *= glm::translate(glm::mat4(1.0f), -playerPos);
+
+  _playerTransform = cameraTrans;
+
+  if (_input->getCommandState(_input->BACKWARD))
   {
     if (_speed.x < MAX_SPEED.x)
       _speed.x += 0.5;
   }
-  if (_input->getCommandState(_input->BACKWARD))
+  if (_input->getCommandState(_input->FORWARD))
   {
     if (_speed.x > MIN_SPEED.x)
       _speed.x -= 0.5;
   }
 
-  if (_input->getCommandState(_input->RIGHT))
-  {
-    if (_speed.y < MAX_SPEED.y)
-      _speed.y += 0.5;
-  }
   if (_input->getCommandState(_input->LEFT))
   {
     if (_speed.y > MIN_SPEED.y)
       _speed.y -= 0.5;
   }
+  if (_input->getCommandState(_input->RIGHT))
+  {
+    if (_speed.y < MAX_SPEED.y)
+      _speed.y += 0.5;
+  }
+  if (_input->getCommandState(_input->TILT_LEFT))
+  {
+    if (_tilt > MIN_TILT)
+      _tilt -= 0.1;
+  }
+  if (_input->getCommandState(_input->TILT_RIGHT))
+  {
+    if (_tilt < MAX_TILT)
+      _tilt += 0.1;
+  }
 
   btVector3 btLinearVelocity = _playerRigidBody->getLinearVelocity();
-  glm::vec2 uLinear(_speed.x - btLinearVelocity.z(), _speed.y - btLinearVelocity.x());
+  // glm::vec2 uLinear(_speed.x - btLinearVelocity.z(), _speed.y - btLinearVelocity.x());
 
-  _playerRigidBody->applyCentralForce(btVector3(uLinear.y, 0, uLinear.x));
+  glm::vec4 playerSpeed =  glm::normalize(glm::vec4(0, 0, 1, 0) * swutils::bulletMat3ToGlmMat4(playerRotation));
+  playerSpeed *= _speed.x;
+
+  glm::vec3 uLinear = glm::vec3(playerSpeed.x - btLinearVelocity.x(), playerSpeed.y - btLinearVelocity.y(), playerSpeed.z - btLinearVelocity.z());
+  // glm::vec4(uLinear.y, 0, uLinear.x, 0);
+
+  // glm::vec4 centralForce = glm::vec4(uLinear.y, 0, uLinear.x, 0) * swutils::bulletMat3ToGlmMat4(playerRotation) ;
+  _playerRigidBody->applyCentralForce(btVector3(uLinear.x, uLinear.y, uLinear.z));
+  
 
   float halfWidth = Info::getXresolution()/2.0f;
   float halfHeight = Info::getYresolution()/2.0f;
@@ -103,26 +137,20 @@ void Physics::updatePostSync(double dt)
 
   std::cout << dx << " " << dy << std::endl;
   btVector3 btAngularVelocity = _playerRigidBody->getAngularVelocity();
-  glm::vec3 uAngular(dx - btAngularVelocity.x(), dy - btAngularVelocity.y(), 0);
-  
-  // _playerRigidBody->applyTorque(btVector3(uAngular.x, uAngular.y, 0));
+  float gain = 10.0f;
+  glm::vec3 uAngular(gain*(dx - btAngularVelocity.y()), gain*(dy - btAngularVelocity.x()), 0);
+  float uTilt = gain * (_tilt - btAngularVelocity.z());
 
-  _playerRigidBody->applyForce(btVector3(0, 0, uAngular.y), btVector3(0,-1,0));
+  _playerRigidBody->applyForce(btVector3(0, 0, -uAngular.y), btVector3(0,-1,0));
   _playerRigidBody->applyForce(btVector3(0, 0, uAngular.x), btVector3(-1,0,0));
-  
-
-
-
-  btTransform playerTransform;
-  _playerMotionState->getWorldTransform(playerTransform);
-  _playerTransform = swutils::bulletTransToGlmMat4(playerTransform);
-
+  _playerRigidBody->applyForce(btVector3(uTilt, 0, 0), btVector3(0,-1,0));
+  // _playerRigidBody->applyTorque(btVector3(uAngular.x, 0, 0));
 
   Info::setPlayerLinearVelocity(glm::vec3(btLinearVelocity.x(), btLinearVelocity.y(), btLinearVelocity.z()));
   Info::setPlayerAngularVelocity(glm::vec3(btAngularVelocity.x(), btAngularVelocity.y(), btAngularVelocity.z()));
-  // Info::setPlayerAngularVelocity(uAngular);
+  // Info::setPlayerAngularVelocity(glm::vec3(playerDirection.x, playerDirection.y, playerDirection.z));
 
-  _dynamicsWorld->stepSimulation(dt,100);
+  _dynamicsWorld->stepSimulation(dt,10);
 }
 
 void Physics::setGravity(float x, float y, float z)
