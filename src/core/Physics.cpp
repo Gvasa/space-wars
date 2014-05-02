@@ -81,12 +81,12 @@ void Physics::updatePostSync(double dt)
 
   _playerTransform = cameraTrans;
 
-  if (_input->getCommandState(_input->BACKWARD))
+  if (_input->getCommandState(_input->FORWARD))
   {
     if (_speed.x < MAX_SPEED.x)
       _speed.x += 0.5;
   }
-  if (_input->getCommandState(_input->FORWARD))
+  if (_input->getCommandState(_input->BACKWARD))
   {
     if (_speed.x > MIN_SPEED.x)
       _speed.x -= 0.5;
@@ -129,13 +129,13 @@ void Physics::updatePostSync(double dt)
   float halfWidth = Info::getXresolution()/2.0f;
   float halfHeight = Info::getYresolution()/2.0f;
 
-  float dx = (_input->getMousePositionX()/halfWidth - 1)/4.0f;
-  float dy = (_input->getMousePositionY()/halfHeight - 1)/4.0f;
+  float dx = -(_input->getMousePositionX()/halfWidth - 1)/4.0f;
+  float dy = -(_input->getMousePositionY()/halfHeight - 1)/4.0f;
   // std::cout << abs(dx) << " " << abs(dy) << std::endl;
   dx = (dx < 0.1 && dx > -0.1) ? 0 : dx;
   dy = (dy < 0.1 && dy > -0.1) ? 0 : dy;
 
-  std::cout << dx << " " << dy << std::endl;
+  // std::cout << dx << " " << dy << std::endl;
   btVector3 btAngularVelocity = _playerRigidBody->getAngularVelocity();
   float gain = 10.0f;
   glm::vec3 uAngular(gain*(dx - btAngularVelocity.y()), gain*(dy - btAngularVelocity.x()), 0);

@@ -129,14 +129,14 @@ void init()
   osg::ref_ptr<osg::Node> astroidNode;
   astroidNode = osgDB::readNodeFile("assets/models/fighter.obj");
 
-  // osg::ref_ptr<osg::Node> fighterNode;
-  // fighterNode = osgDB::readNodeFile("assets/models/fighter.obj");
+  osg::ref_ptr<osg::Node> fighterNode;
+  fighterNode = osgDB::readNodeFile("assets/models/fighter.obj");
 
   if (astroidNode.valid())
   {
     btCollisionShape* asteroidShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(astroidNode);
 
-    // btCollisionShape* fighterShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(fighterNode);
+    btCollisionShape* fighterShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(fighterNode);
 
      // _renderer->addNodeToScene(osgbCollision::osgNodeFromBtCollisionShape(asteroidShape));
 
@@ -144,8 +144,8 @@ void init()
     // _renderer->addNodeToScene(astroidNode.get());
     // _physics->addCollisionShape(asteroidShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
 
-    // _renderer->addNodeToScene(fighterNode.get());
-    // _physics->addCollisionShape(fighterShape, glm::translate( glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)));
+    _renderer->addNodeToScene(fighterNode.get());
+    _physics->addCollisionShape(fighterShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
   }
 }
 
