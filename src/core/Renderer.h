@@ -86,11 +86,21 @@ class Renderer
     
     //! Update transform of node with index i.
     void updateNode(int i, osg::Matrix transform);
+
+    /**
+     * @brief Create the skybox.
+     */
+    void setUpSkyBox();
+
+    void setTranslationTransform(glm::mat4 translationMatrix);
+
+    void setRotationTransform(glm::mat4 rotationMatrix);
   
   private:
     osgViewer::Viewer* _viewer; //!< The osg viewer connected to sgct.
     osg::ref_ptr<osg::Group> _root; //!< The root of the scene graph.
-    osg::ref_ptr<osg::MatrixTransform> _sceneTransform; //!< The top transform of the scene graph that controls camera player movement. 
+    osg::ref_ptr<osg::MatrixTransform> _sceneTransform; //!< The top transform of the scene graph that controls camera player movement.
+    osg::ref_ptr<osg::Group> _sceneObjects;
     osg::ref_ptr<osg::MatrixTransform> _toBulletTransform; 
     osg::ref_ptr<osg::FrameStamp> _frameStamp; //!< Framestamp that needs to be synced between sgct and osg.
 
@@ -107,6 +117,9 @@ class Renderer
     int _playerSpeedGuiTextIndex = 0;
     int _playerVelocityGuiTextIndex = 0;
     int _playerAngularVelocityGuiIndex = 0;
+
+    osg::ref_ptr<osg::MatrixTransform> _rotationTransform;
+    osg::ref_ptr<osg::MatrixTransform> _translationTransform;
 };
 
 #endif

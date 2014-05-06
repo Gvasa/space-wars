@@ -58,7 +58,8 @@ int main(int argc, char *argv[])
   _engine->setDisplayInfoVisibility(true);
   _engine->setMouseCursorVisibility(_engine->getFocusedWindowIndex(), false);
   _engine->getActiveWindowPtr()->setNumberOfAASamples(16);
-
+  _engine->setNearAndFarClippingPlanes(0.1,5000);
+  std::cout << "Clipping planes: " << _engine->getNearClippingPlane() << " " << _engine->getFarClippingPlane() << std::endl;
 
 
   _engine->render();
@@ -114,6 +115,8 @@ void preSync()
 void postSyncPreDraw()
 {
   _renderer->setSceneTransform(_sceneTransform.getVal());
+  _renderer->setTranslationTransform(_physics->getTranslationMatrix());
+  _renderer->setRotationTransform(_physics->getRotationMatrix());
 
   _physics->updatePostSync(_engine->getDt());
   _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
@@ -126,27 +129,16 @@ void postSyncPreDraw()
 
 void init()
 {
-  osg::ref_ptr<osg::Node> astroidNode;
-  astroidNode = osgDB::readNodeFile("assets/models/fighter.obj");
 
   osg::ref_ptr<osg::Node> fighterNode;
   fighterNode = osgDB::readNodeFile("assets/models/fighter.obj");
 
-  if (astroidNode.valid())
-  {
-    btCollisionShape* asteroidShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(astroidNode);
 
-    btCollisionShape* fighterShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(fighterNode);
+  btCollisionShape* fighterShape = osgbCollision::btConvexTriMeshCollisionShapeFromOSG(fighterNode);
 
-     // _renderer->addNodeToScene(osgbCollision::osgNodeFromBtCollisionShape(asteroidShape));
-
-    // astroidTrans->addChild(astroidNode.get());
-    // _renderer->addNodeToScene(astroidNode.get());
-    // _physics->addCollisionShape(asteroidShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
-
-    _renderer->addNodeToScene(fighterNode.get());
-    _physics->addCollisionShape(fighterShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
-  }
+  _renderer->addNodeToScene(fighterNode.get());
+  _physics->addCollisionShape(fighterShape, glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+  
 }
 
 void encode()

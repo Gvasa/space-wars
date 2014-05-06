@@ -26,14 +26,24 @@ Renderer::Renderer()
   _viewer->setSceneData(_root.get());
 
   _sceneTransform = new osg::MatrixTransform();
+  _rotationTransform = new osg::MatrixTransform();
+  _translationTransform = new osg::MatrixTransform();
+  _sceneObjects = new osg::Group();
 
   osg::ref_ptr<osgFX::Cartoon> cell_fx = new osgFX::Cartoon;
   osg::ref_ptr<osgFX::SpecularHighlights> specular_fx = new osgFX::SpecularHighlights;
   
-  specular_fx->addChild(cell_fx.get());
-  cell_fx->addChild(_sceneTransform.get());
+  // specular_fx->addChild(cell_fx.get());
+  // cell_fx->addChild(_sceneTransform.get());
 
-  _root->addChild(specular_fx);
+  // _root->addChild(specular_fx);
+
+  // _root->addChild(_sceneTransform.get());
+  // _sceneTransform->addChild(cell_fx.get());
+  _root->addChild(_rotationTransform.get());
+  _rotationTransform->addChild(_translationTransform.get());
+  _translationTransform->addChild(cell_fx.get());
+  cell_fx->addChild(_sceneObjects.get());
 
   _gui = new Gui();
   _gui->addGuiObject(724,244,350,100,"assets/gui/hpskold.png");
@@ -54,7 +64,7 @@ Renderer::Renderer()
     gridCubeDrawable->computeBound();
     osg::Geode* gridShapesGeode = new osg::Geode();
     gridShapesGeode->addDrawable(gridCubeDrawable);
-    _sceneTransform->addChild(gridShapesGeode);
+    _sceneObjects->addChild(gridShapesGeode);
   }
  
   for(int z = -(size/2); z < (size/2); z++)
@@ -63,12 +73,49 @@ Renderer::Renderer()
     osg::ShapeDrawable* gridCubeDrawable = new osg::ShapeDrawable(gridCube);
     osg::Geode* gridShapesGeode = new osg::Geode();
     gridShapesGeode->addDrawable(gridCubeDrawable);
-    _sceneTransform->addChild(gridShapesGeode);
+    _sceneObjects->addChild(gridShapesGeode);
   }
 
-  _root->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
+  _sceneObjects->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
   tempSetUpLight();
+
+  
+
+  // skyNode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
+  // skyNode->getOrCreateStateSet()->setTextureMode(0, GL_NEAREST, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+
+  // _sceneTransform->addChild(skyNode.get());
+  setUpSkyBox();
+}
+
+void Renderer::setUpSkyBox()
+{
+  osg::ref_ptr<osg::Node> skyNode;
+  skyNode = osgDB::readNodeFile("assets/models/sphere_final.obj");
+
+  osg::Texture2D* texture = new osg::Texture2D();
+
+  osg::ref_ptr<osg::Image> image(osgDB::readImageFile("assets/models/smaller_stars.png"));
+  texture->setImage(image.get());
+
+  texture->setWrap(osg::Texture2D::WrapParameter::WRAP_S,osg::Texture2D::WrapMode::REPEAT  );
+  texture->setWrap(osg::Texture2D::WrapParameter::WRAP_T,osg::Texture2D::WrapMode::REPEAT  );
+  texture->setWrap(osg::Texture2D::WrapParameter::WRAP_R,osg::Texture2D::WrapMode::REPEAT  );
+ 
+  texture->setFilter(osg::Texture2D::FilterParameter::MIN_FILTER,osg::Texture2D::FilterMode::LINEAR);
+  texture->setFilter(osg::Texture2D::FilterParameter::MAG_FILTER,osg::Texture2D::FilterMode::LINEAR);
+
+  osg::ref_ptr<osg::StateSet> state = skyNode->getOrCreateStateSet();
+  osg::Material *material = new osg::Material();
+
+  state->setTextureAttribute(0,texture,osg::StateAttribute::OVERRIDE);
+  state->setTextureMode(0,GL_TEXTURE_2D,osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
+  state->setTextureMode(0,GL_TEXTURE_GEN_S,osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
+  state->setTextureMode(0,GL_TEXTURE_GEN_T,osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
+  state->setAttribute(material,osg::StateAttribute::OVERRIDE);
+
+  _rotationTransform->addChild(skyNode.get());
+
 }
 
 Renderer::~Renderer()
@@ -138,17 +185,27 @@ void Renderer::setSceneTransform(glm::mat4 transform)
   _sceneTransform->setMatrix(osg::Matrixd(glm::value_ptr(transform)));
 }
 
+void Renderer::setTranslationTransform(glm::mat4 translationMatrix)
+{
+  _translationTransform->setMatrix(osg::Matrixd(glm::value_ptr(translationMatrix)));
+}
+
+void Renderer::setRotationTransform(glm::mat4 rotationMatrix)
+{
+  _rotationTransform->setMatrix(osg::Matrixd(glm::value_ptr(rotationMatrix)));
+}
+
 void Renderer::addNodeToScene(osg::Node* node)
 {
   _transforms.push_back(new osg::MatrixTransform());
   _transforms.back()->addChild(node);
 
-  _sceneTransform->addChild(_transforms.back());
+  _sceneObjects->addChild(_transforms.back());
 }
 
 void Renderer::updateNode(int i, glm::mat4 transform)
 {
-  _transforms[i]->setMatrix(osg::Matrix(glm::value_ptr(transform)));
+  _transforms[i]->setMatrix(osg::Matrix(glm::value_ptr(glm::inverse(transform))));
 }
 
 void Renderer::updateNode(int i, osg::Matrix transform)

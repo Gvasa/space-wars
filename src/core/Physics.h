@@ -83,6 +83,14 @@ class Physics
 
     //! Get number of rigid bodies.
     int getNumberOfRigidBodies();
+
+    glm::mat4 getTranslationMatrix() {
+        return _translationMatrix;
+    }
+
+    glm::mat4 getRotationMatrix() {
+        return _rotationMatrix;
+    }
   private:
     btBroadphaseInterface* _broadphase;
     btDefaultCollisionConfiguration* _collisionConfiguration;
@@ -108,6 +116,9 @@ class Physics
     btCollisionShape* _planeShape;
     btDefaultMotionState* _staticMotionState;
     btRigidBody* _planeRigidBody;
+
+    glm::mat4 _translationMatrix;
+    glm::mat4 _rotationMatrix;
 
 };
 

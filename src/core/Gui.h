@@ -40,10 +40,11 @@ class Gui : public osg::Group
 
     //! Add text to the GUI.
     /*!
-      \param fontFize The size of the font.
+      \param fontSize The size of the font.
       \param xPos Position along the x-axis.
       \param yPos Position along the y-axis.
       \param fontName The name of the font including path.
+      \param text The text of this element.
       \return Index of the added text
     */
     int addText(int fontSize, int xPos, int yPos, std::string text, std::string fontName);

@@ -24,7 +24,7 @@ Physics::Physics(Input* input)
 
   // Create player.
   osg::ref_ptr<osg::Node> playerNode;
-  playerNode = osgDB::readNodeFile("assets/models/spaceship.3ds");
+  playerNode = osgDB::readNodeFile("assets/models/fighter.obj");
   if (playerNode.valid())
   {
     std::cout << "Player model found." << std::endl;
@@ -38,6 +38,7 @@ Physics::Physics(Input* input)
   // _playerShape = new btBoxShape(btVector3(1.0f,1.0f,1.0f));
   _playerMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,-5)));
   _playerRigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _playerMotionState, _playerShape, btVector3(1,1,1)));
+  _playerRigidBody->setActivationState(DISABLE_DEACTIVATION);
 
   // setUpPlaneCollision();
   // _dynamicsWorld->addRigidBody(_planeRigidBody);<
@@ -71,12 +72,12 @@ void Physics::updatePostSync(double dt)
   btVector3 playerTranslation = playerTransform.getOrigin();
   // _playerTransform = swutils::bulletTransToGlmMat4(playerTransform);
 
-  glm::mat4 translationMatrix = glm::translate(glm::mat4(), glm::vec3(playerTranslation.x(), playerTranslation.y(), playerTranslation.z()));
-  glm::mat4 rotationMatrix = swutils::bulletMat3ToGlmMat4(playerRotation);
+  _translationMatrix = glm::translate(glm::mat4(), glm::vec3(playerTranslation.x(), playerTranslation.y(), playerTranslation.z()));
+  _rotationMatrix = swutils::bulletMat3ToGlmMat4(playerRotation);
   glm::vec3 playerPos = Info::getPlayerPosition();
 
   glm::mat4 cameraTrans = glm::translate( glm::mat4(1.0f), playerPos);
-  cameraTrans *= rotationMatrix*translationMatrix;
+  cameraTrans *= _rotationMatrix*_translationMatrix;
   cameraTrans *= glm::translate(glm::mat4(1.0f), -playerPos);
 
   _playerTransform = cameraTrans;
@@ -115,8 +116,11 @@ void Physics::updatePostSync(double dt)
 
   btVector3 btLinearVelocity = _playerRigidBody->getLinearVelocity();
   // glm::vec2 uLinear(_speed.x - btLinearVelocity.z(), _speed.y - btLinearVelocity.x());
+  glm::vec4 playerDirection = glm::vec4(0, 0, -1, 0) * cameraTrans;
+  glm::vec4 playerUp = glm::vec4(0, 1, 0, 0) * cameraTrans;
+  glm::vec4 playerRight = glm::vec4(-1, 0, 0, 0) * cameraTrans;
 
-  glm::vec4 playerSpeed =  glm::normalize(glm::vec4(0, 0, 1, 0) * swutils::bulletMat3ToGlmMat4(playerRotation));
+  glm::vec4 playerSpeed =  glm::normalize(glm::vec4(0, 0, 1, 0) * _rotationMatrix);
   playerSpeed *= _speed.x;
 
   glm::vec3 uLinear = glm::vec3(playerSpeed.x - btLinearVelocity.x(), playerSpeed.y - btLinearVelocity.y(), playerSpeed.z - btLinearVelocity.z());
@@ -141,10 +145,9 @@ void Physics::updatePostSync(double dt)
   glm::vec3 uAngular(gain*(dx - btAngularVelocity.y()), gain*(dy - btAngularVelocity.x()), 0);
   float uTilt = gain * (_tilt - btAngularVelocity.z());
 
-  _playerRigidBody->applyForce(btVector3(0, 0, -uAngular.y), btVector3(0,-1,0));
-  _playerRigidBody->applyForce(btVector3(0, 0, uAngular.x), btVector3(-1,0,0));
-  _playerRigidBody->applyForce(btVector3(uTilt, 0, 0), btVector3(0,-1,0));
-  // _playerRigidBody->applyTorque(btVector3(uAngular.x, 0, 0));
+  _playerRigidBody->applyForce(btVector3(0, uAngular.y, 0), btVector3(playerDirection.x, playerDirection.y, playerDirection.z));
+  _playerRigidBody->applyForce(btVector3(0, 0, uAngular.x), btVector3(playerRight.x, playerRight.y, playerRight.z));
+  // _playerRigidBody->applyForce(btVector3(uTilt, 0, 0),4 btVector3(0,-1,0));
 
   Info::setPlayerLinearVelocity(glm::vec3(btLinearVelocity.x(), btLinearVelocity.y(), btLinearVelocity.z()));
   Info::setPlayerAngularVelocity(glm::vec3(btAngularVelocity.x(), btAngularVelocity.y(), btAngularVelocity.z()));
