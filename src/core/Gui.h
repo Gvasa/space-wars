@@ -56,6 +56,8 @@ class Gui : public osg::Group
      * @brief Add a text GUI element from an obejct of type T.
      * @details Takes a pointer to an obejct of type T and a pointer to a function that converts that object to a std::string. Using these two pointers this object is then displayed as a GUI text element. As long as the pointer remains non-NULL the text will update automatically.
      * 
+     * OBS! Can not yet be used!
+     * 
      * @param xPos Position along the x-axis. 
      * @param yPos Position along the y-axis
      * @param textObject Pointer to the object that is to be displayed.
@@ -77,6 +79,9 @@ class Gui : public osg::Group
    std::vector<osgText::Text*> _textObjects;
 
    osg::MatrixTransform* _modelViewMatrix;
+
+   osg::Group* _images;
+   osg::Group* _text;
  
 };
 

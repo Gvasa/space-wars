@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <stdio.h>
 
 #include "sgct.h"
 #include <glm/glm.hpp>
@@ -24,6 +25,7 @@
 
 #include "Gui.h"
 #include "Info.h"
+#include "objects/GameObject.h"
 
 //! Handles the games scene graph.
 /*!
@@ -69,11 +71,6 @@ class Renderer
         The pixel coordinates are given by the sgct getActiveViewportPixelCoords() function.  
     */
     void setPixelCoords(int vp1, int vp2, int vp3, int vp4);
-    //! Sets the scene transform used for rendering. 
-    /*!
-        The scene transform moves the world around the player and should be given by the physics engine. 
-    */
-    void setSceneTransform(glm::mat4 transform);
 
     //! Test functions that sets up a few test lights.
     void tempSetUpLight();
@@ -95,11 +92,14 @@ class Renderer
     void setTranslationTransform(glm::mat4 translationMatrix);
 
     void setRotationTransform(glm::mat4 rotationMatrix);
+
+    void registerPlayerObject(GameObject* player) {
+        _player = player;
+    }
   
   private:
     osgViewer::Viewer* _viewer; //!< The osg viewer connected to sgct.
     osg::ref_ptr<osg::Group> _root; //!< The root of the scene graph.
-    osg::ref_ptr<osg::MatrixTransform> _sceneTransform; //!< The top transform of the scene graph that controls camera player movement.
     osg::ref_ptr<osg::Group> _sceneObjects;
     osg::ref_ptr<osg::MatrixTransform> _toBulletTransform; 
     osg::ref_ptr<osg::FrameStamp> _frameStamp; //!< Framestamp that needs to be synced between sgct and osg.
@@ -120,6 +120,8 @@ class Renderer
 
     osg::ref_ptr<osg::MatrixTransform> _rotationTransform;
     osg::ref_ptr<osg::MatrixTransform> _translationTransform;
+
+    GameObject* _player;
 };
 
 #endif

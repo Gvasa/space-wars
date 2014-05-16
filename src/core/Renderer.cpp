@@ -25,36 +25,30 @@ Renderer::Renderer()
 
   _viewer->setSceneData(_root.get());
 
-  _sceneTransform = new osg::MatrixTransform();
   _rotationTransform = new osg::MatrixTransform();
   _translationTransform = new osg::MatrixTransform();
   _sceneObjects = new osg::Group();
 
   osg::ref_ptr<osgFX::Cartoon> cell_fx = new osgFX::Cartoon;
   osg::ref_ptr<osgFX::SpecularHighlights> specular_fx = new osgFX::SpecularHighlights;
-  
-  // specular_fx->addChild(cell_fx.get());
-  // cell_fx->addChild(_sceneTransform.get());
 
-  // _root->addChild(specular_fx);
-
-  // _root->addChild(_sceneTransform.get());
-  // _sceneTransform->addChild(cell_fx.get());
   _root->addChild(_rotationTransform.get());
   _rotationTransform->addChild(_translationTransform.get());
   _translationTransform->addChild(cell_fx.get());
   cell_fx->addChild(_sceneObjects.get());
 
   _gui = new Gui();
-  _gui->addGuiObject(724,244,350,100,"assets/gui/hpskold.png");
-  _gui->addGuiObject(423,360,960,900,"assets/gui/character.png");
+
+  _gui->addGuiObject(1920,1080,1920/2,1080/2,"assets/gui/gui_pilot.png");
+  // _gui->addGuiObject(423,360,960,900,"assets/gui/character.png");
+  _gui->addGuiObject(100,100,1920/2,1080/2,"assets/gui/crosshair.png", 0.7);
   _gui->addText(50, 1550, 1000, "Game of Domes\nAlpha", "C:/Windows/Fonts/impact.ttf");
+
+  _playerVelocityGuiTextIndex = _gui->addText(50, 700, 200, "0", "C:/Windows/Fonts/impact.ttf");
+
+  _playerAngularVelocityGuiIndex = _gui->addText(50, 1060, 200, "0", "C:/Windows/Fonts/impact.ttf");
+
   _root->addChild(_gui);
-
-  _playerSpeedGuiTextIndex = _gui->addText(50, 10, 800, "0", "C:/Windows/Fonts/impact.ttf");
-  _playerVelocityGuiTextIndex = _gui->addText(50, 10, 600, "0", "C:/Windows/Fonts/impact.ttf");
-
-  _playerAngularVelocityGuiIndex = _gui->addText(50, 900, 600, "0", "C:/Windows/Fonts/impact.ttf");
 
   int size = 1000;
   for(int x = -(size/2); x < (size/2); x++)
@@ -79,12 +73,6 @@ Renderer::Renderer()
   _sceneObjects->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
   tempSetUpLight();
 
-  
-
-  // skyNode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
-  // skyNode->getOrCreateStateSet()->setTextureMode(0, GL_NEAREST, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
-  // _sceneTransform->addChild(skyNode.get());
   setUpSkyBox();
 }
 
@@ -107,6 +95,7 @@ void Renderer::setUpSkyBox()
 
   osg::ref_ptr<osg::StateSet> state = skyNode->getOrCreateStateSet();
   osg::Material *material = new osg::Material();
+  // material->setEmission(osg::Material::FRONT_AND_BACK, osg::Vec4(1,1,1,1));
 
   state->setTextureAttribute(0,texture,osg::StateAttribute::OVERRIDE);
   state->setTextureMode(0,GL_TEXTURE_2D,osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
@@ -143,16 +132,25 @@ void Renderer::updatePreSync(double currentTime, int* mousePos)
 void Renderer::updatePostSync(double currentTime, unsigned int frameNumber, glm::mat4 modelMatrix)
 {
   _gui->update(_mouseXpos, _mouseYpos);
-  _gui->changeText(_playerSpeedGuiTextIndex, std::to_string(Info::getPlayerSpeed()));
 
-
-  std::string playerVelocity = std::to_string(Info::getPlayerLinearVelocity().x) + "\n" + std::to_string(Info::getPlayerLinearVelocity().y) + "\n" + std::to_string(Info::getPlayerLinearVelocity().z) + "\n"; 
+  char buffer[50];
+  int textSize = sprintf(buffer, "LIN:\nX %.2f\nY %.2f\nZ %.2f", Info::getPlayerLinearVelocity().x,
+    Info::getPlayerLinearVelocity().y,
+    Info::getPlayerLinearVelocity().z);
+  std::string playerVelocity(buffer, textSize);
   _gui->changeText(_playerVelocityGuiTextIndex, playerVelocity);
 
-  std::string playerAngularVelocity = std::to_string(Info::getPlayerAngularVelocity().x) + "\n" + std::to_string(Info::getPlayerAngularVelocity().y) + "\n" + std::to_string(Info::getPlayerAngularVelocity().z) + "\n"; 
-  _gui->changeText(_playerAngularVelocityGuiIndex, playerAngularVelocity);
+  textSize = sprintf(buffer, "ANG:\nX %.2f\nY %.2f\nZ %.2f",
+             Info::getPlayerAngularVelocity().x,
+             Info::getPlayerAngularVelocity().y,
+             Info::getPlayerAngularVelocity().z);
 
-  _sceneTransform->postMult(osg::Matrix(glm::value_ptr(modelMatrix)));
+  std::string playerAngularVelocity(buffer, textSize); 
+  _gui->changeText(_playerAngularVelocityGuiIndex, playerAngularVelocity);
+  
+  _rotationTransform->setMatrix(osg::Matrix(glm::value_ptr(_player->getRotationMatrix())));
+  _translationTransform->setMatrix(osg::Matrix(glm::value_ptr(_player->getTranslationMatrix())));
+    _rotationTransform->postMult(osg::Matrix(glm::value_ptr(modelMatrix)));
 
   _frameStamp->setFrameNumber(frameNumber);
   _frameStamp->setReferenceTime(currentTime);
@@ -178,11 +176,6 @@ void Renderer::setPixelCoords(int vp1, int vp2, int vp3, int vp4)
   _pixelCoords[1] = vp2;
   _pixelCoords[2] = vp3;
   _pixelCoords[3] = vp4;
-}
-
-void Renderer::setSceneTransform(glm::mat4 transform)
-{
-  _sceneTransform->setMatrix(osg::Matrixd(glm::value_ptr(transform)));
 }
 
 void Renderer::setTranslationTransform(glm::mat4 translationMatrix)

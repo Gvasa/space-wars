@@ -3,6 +3,8 @@
 Gui::Gui(int width, int height)
 : _width(width), _height(height)
 {
+		_images = new osg::Group();
+		_text = new osg::Group();
 // A geometry node for our HUD:
 	osg::Geode* HUDGeode = new osg::Geode();
 
@@ -38,7 +40,11 @@ Gui::Gui(int width, int height)
 	// HUD model view matrix.
 	crosshairTransform = new osg::MatrixTransform();
 
-	_modelViewMatrix->addChild( crosshairTransform );
+	// _modelViewMatrix->addChild( crosshairTransform );
+	_modelViewMatrix->addChild(_text);
+	// _text->addChild(crosshairTransform);
+	_text->addChild(_images);
+	_images->addChild(crosshairTransform);
 	crosshairTransform->addChild(HUDGeode);
 	
 	// Set up geometry for the HUD and add it to the HUD
@@ -65,9 +71,9 @@ Gui::Gui(int width, int height)
 	HUD_CrosshairIndices->push_back(3);
 
 	//Choose transparens
-	float transparens = 1.0;
+	float transparens = 0.3;
 	osg::Vec4Array* HUDcolors = new osg::Vec4Array;
-	HUDcolors->push_back( osg::Vec4(1,1,1, transparens) );
+	HUDcolors->push_back( osg::Vec4(1,0,0, transparens) );
 
 	osg::Vec2Array* texcoords = new osg::Vec2Array(4);
 	(*texcoords)[0].set(0.0f,0.0f);
@@ -91,7 +97,7 @@ Gui::Gui(int width, int height)
 
 	// Create and set up a state set using the texture from above:
 	osg::StateSet* HUDStateSet = new osg::StateSet();
-	HUDGeode->setStateSet( HUDStateSet );
+	_images->setStateSet( HUDStateSet );
 	HUDStateSet->setTextureAttributeAndModes(0,HUDTexture,osg::StateAttribute::ON);
 
 	// For this state set, turn blending on (so alpha texture looks right)
@@ -129,10 +135,10 @@ int Gui::addGuiObject(int width, int height, int xPos, int yPos, std::string fil
 	float cx = (_width - width) / 2;
 	float cy = (_height - height) / 2;
 	osg::Vec3Array* vertecies = new osg::Vec3Array();
-	vertecies->push_back( osg::Vec3( cx     , cy     , -1) );
-	vertecies->push_back( osg::Vec3( cx+width, cy     , -1) );
-	vertecies->push_back( osg::Vec3( cx+width, cy+height, -1) );
-	vertecies->push_back( osg::Vec3( cx     , cy+height, -1) );
+	vertecies->push_back( osg::Vec3( cx     , cy     , 0) );
+	vertecies->push_back( osg::Vec3( cx+width, cy     , 0) );
+	vertecies->push_back( osg::Vec3( cx+width, cy+height, 0) );
+	vertecies->push_back( osg::Vec3( cx     , cy+height, 0) );
 
 	osg::DrawElementsUInt* indecies = new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0);
 	indecies->push_back(0);
@@ -168,14 +174,14 @@ int Gui::addGuiObject(int width, int height, int xPos, int yPos, std::string fil
 	osg::StateSet* stateSet = new osg::StateSet();
 	_guiObjects.back()->setStateSet(stateSet);
 	stateSet->setTextureAttributeAndModes(0,texture,osg::StateAttribute::ON);
-	stateSet->setMode(GL_BLEND,osg::StateAttribute::ON);
-	stateSet->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-	stateSet->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
-	stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OVERRIDE | osg::StateAttribute::OFF );
-	stateSet->setRenderBinDetails( 11, "RenderBin");
+	// stateSet->setMode(GL_BLEND,osg::StateAttribute::ON);
+	// stateSet->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	// stateSet->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
+	// stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OVERRIDE | osg::StateAttribute::OFF );
+	// stateSet->setRenderBinDetails( 11, "RenderBin");
 
 	_objectTransforms.back()->addChild(_guiObjects.back());
-	_modelViewMatrix->addChild(_objectTransforms.back());
+	_images->addChild(_objectTransforms.back());
 
 	return _guiObjects.size() - 1;
 }
@@ -185,7 +191,7 @@ int Gui::addText(int fontSize, int xPos, int yPos, std::string text, std::string
 	_textGeodes.push_back(new osg::Geode());
 	_textObjects.push_back(new osgText::Text());
 
-	_modelViewMatrix->addChild(_textGeodes.back());
+	_images->addChild(_textGeodes.back());
 	_textGeodes.back()->addDrawable(_textObjects.back());
 
 	_textObjects.back()->setCharacterSize(fontSize);
@@ -197,6 +203,7 @@ int Gui::addText(int fontSize, int xPos, int yPos, std::string text, std::string
 
 	return _textObjects.size() - 1;
 }
+
 
 void Gui::changeText(int i, std::string text)
 {

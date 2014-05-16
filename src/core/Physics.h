@@ -2,8 +2,12 @@
 #define PHYSICS_H
 
 #include <vector>
+#include <iostream>
+#include <algorithm>
+#include <list>
 
 #include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btCollisionWorld.h>
 #include <osgbDynamics/MotionState.h>
 #include <osgbCollision/CollisionShapes.h>
 #include <osgbDynamics/RigidBody.h>
@@ -14,6 +18,10 @@
 #include "SwUtils.h"
 #include "Input.h"
 #include "Info.h"
+#include "objects/AssetsLibrary.h"
+#include "objects/GameObject.h"
+#include "objects/BulletObject.h"
+#include "objects/PlayerObject.h"
 
 //! The games physics engine.
 class Physics
@@ -22,7 +30,7 @@ class Physics
   //friend void tickCallback(btDynamicsWorld * world, btScalar timestep);
   public:
     const glm::vec2 MAX_SPEED;
-    const glm::vec2 MIN_SPEED;
+    const glm::vec2 MIN_SPEED;  
     const float MAX_TILT = 1.0f;
     const float MIN_TILT = -1.0f;
 
@@ -30,7 +38,7 @@ class Physics
     /*!
         \param input Pointer to the input object used by the main loop to handle player interaction.
     */
-    Physics(Input* input);
+    Physics(Input* input, std::list<BulletObject*>* bulletList);
 
     //! Basic destructor that removes dynamically allocated resources.
     ~Physics();
@@ -91,6 +99,10 @@ class Physics
     glm::mat4 getRotationMatrix() {
         return _rotationMatrix;
     }
+
+    void registerPlayerObject(GameObject* player);
+
+
   private:
     btBroadphaseInterface* _broadphase;
     btDefaultCollisionConfiguration* _collisionConfiguration;
@@ -98,9 +110,10 @@ class Physics
     btSequentialImpulseConstraintSolver* _solver;
     btDiscreteDynamicsWorld* _dynamicsWorld;
 
-    btCollisionShape* _playerShape;
-    btDefaultMotionState* _playerMotionState;
-    btRigidBody* _playerRigidBody;
+    // btCollisionShape* _playerShape;
+    // btDefaultMotionState* _playerMotionState;
+    // btRigidBody* _playerRigidBody;
+    GameObject* _player;
 
     glm::vec2 _speed;
     float _tilt = 0.0f;
@@ -120,6 +133,7 @@ class Physics
     glm::mat4 _translationMatrix;
     glm::mat4 _rotationMatrix;
 
+    std::list<BulletObject*>* _bulletList;
 };
 
 #endif

@@ -9,7 +9,7 @@ class Input
 
   public:
     //! List of all available commands.
-    enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, TILT_LEFT = 4, TILT_RIGHT = 5};
+    enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, TILT_LEFT = 4, TILT_RIGHT = 5, FIRE = 6};
     
     //! Basic constructor. 
     Input();
@@ -22,6 +22,12 @@ class Input
         \param action Marks if the key has been pressed or held down.
     */
     void keyCallback(const int& key, const int& action);
+    //! Checks the mouse input revived from sgct.
+    /*!
+        \param key The key that has been pressed.
+        \param action Marks if the key has been pressed or held down.
+    */
+    void mouseCallback(const int& key, const int& action);
     //! Updates the mouse position. Not currently used.
     void setMousePosition(const double& xPos, const double& yPos);
     
@@ -47,8 +53,8 @@ class Input
     void getMousePosition(double& xPos, double& yPos);
 
   private:
-    static const int NR_OF_COMMANDS = 6;
-    static const int REPEAT = 2, PRESS = 1;
+    static const int NR_OF_COMMANDS = 7;
+    static const int REPEAT = 2, PRESS = 1, MOUSE_LEFT = 0;
     bool _commandStates[NR_OF_COMMANDS];
     double _xPosition = 0, _yPosition = 0;
 };

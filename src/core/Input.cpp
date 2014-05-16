@@ -55,6 +55,18 @@ void Input::keyCallback(const int& key, const int& action)
   }
 }
 
+void Input::mouseCallback(const int& key, const int& action)
+{
+  switch(key)
+  {
+    case MOUSE_LEFT:
+    {
+      _commandStates[FIRE] = ((action == REPEAT || action == PRESS) ? true : false);   
+      break;
+    }
+  }
+}
+
 void Input::setMousePosition(const double& xPos, const double& yPos)
 {
   _xPosition = xPos;
