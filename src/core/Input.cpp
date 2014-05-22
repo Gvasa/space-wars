@@ -57,6 +57,7 @@ void Input::keyCallback(const int& key, const int& action)
 
 void Input::mouseCallback(const int& key, const int& action)
 {
+  std::cout << "Mouse press" << std::endl;
   switch(key)
   {
     case MOUSE_LEFT:

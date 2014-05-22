@@ -104,7 +104,7 @@ void Physics::updatePostSync(double dt)
   // });
 
   for (auto it = _bulletList->begin(); it != _bulletList->end(); it++){
-    (*it)->getRigidBody()->applyCentralForce(btVector3(10,10,10));
+    (*it)->getRigidBody()->applyCentralForce(btVector3(0,0,30));
   }
 
   _translationMatrix = _player->getTranslationMatrix();
@@ -230,6 +230,14 @@ void Physics::addCollisionShape(btCollisionShape* shape, glm::mat4 transform)
 
   _dynamicsWorld->addRigidBody(_rigidBodies.back());
   // _dynamicsWorld->contactPairTest(_rigidBodies.back(), _playerRigidBody, _collisionCallback);
+}
+
+void Physics::addBulletObject(BulletObject* obj)
+{
+  _dynamicsWorld->addRigidBody(obj->getRigidBody());
+  _motionStates.push_back(obj->getMotionState());
+  _collisionShapes.push_back(obj->getCollisionShape());
+  _rigidBodies.push_back(obj->getRigidBody());
 }
 
 glm::mat4 Physics::getRigidBodyTransform(int i)

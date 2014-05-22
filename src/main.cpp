@@ -125,19 +125,25 @@ void preSync()
   
 }
 
+float cooldown = 0.2f;
 void postSyncPreDraw()
 { 
   _renderer->setTranslationTransform(_physics->getTranslationMatrix());
   _renderer->setRotationTransform(_physics->getRotationMatrix());
 
-  if (_input->getCommandState(_input->FIRE))
-  {
-    // std::cout << "hej" << std::endl;
-    _bullets.push_back(new BulletObject(AssetsLibrary::getCollisionShape(AssetsLibrary::BULLET), AssetsLibrary::getNode(AssetsLibrary::BULLET), glm::translate(glm::mat4(1.0f), glm::vec3(0)), glm::vec3(10,1,1)));
+  cooldown -= _engine->getDt();
+  if (cooldown <= 0 && _input->getCommandState(_input->FIRE))
+  { 
+    cooldown = 2.0f;
+    glm::vec4 playerDirection = glm::vec4(0,0,5,0) * _players.back()->getRotationMatrix();
+    glm::mat4 bulletTransform = _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix() * glm::translate(glm::mat4(1), glm::vec3(0,0,5));
+    _bullets.push_back(new BulletObject(AssetsLibrary::getCollisionShape(AssetsLibrary::BULLET), AssetsLibrary::getNode(AssetsLibrary::BULLET),bulletTransform , glm::vec3(10,1,1)));
     // _dynamicsWorld->addRigidBody(_bulletList.back()->getRigidBody());
     
     _renderer->addNodeToScene(_bullets.back()->getNode());
-    _physics->addCollisionShape(_bullets.back()->getCollisionShape(),_players.back()->getBulletTransform());
+    // _physics->addCollisionShape(_bullets.back()->getCollisionShape(),_players.back()->getBulletTransform());
+    // _physics->addCollisionShape(_bullets.back()->getCollisionShape(),glm::mat4(1));
+    _physics->addBulletObject(_bullets.back());
 
   }
   _physics->updatePostSync(_engine->getDt());
@@ -163,12 +169,12 @@ void init()
 
 void encode()
 {
-  sgct::SharedData::instance()->writeDouble(&_currentTime);
-  sgct::SharedData::instance()->writeObj(&_sceneTransform);
+  // sgct::SharedData::instance()->writeDouble(&_currentTime);
+  // sgct::SharedData::instance()->writeObj(&_sceneTransform);
 }
 
 void decode()
 {
-  sgct::SharedData::instance()->readDouble(&_currentTime);
-  sgct::SharedData::instance()->readObj(&_sceneTransform);
+  // sgct::SharedData::instance()->readDouble(&_currentTime);
+  // sgct::SharedData::instance()->readObj(&_sceneTransform);
 }
