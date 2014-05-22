@@ -8,6 +8,9 @@ class Input
 {
 
   public:
+    //! Amount of avaliable commands.
+    static const int NR_OF_COMMANDS = 7;
+
     //! List of all available commands.
     enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, TILT_LEFT = 4, TILT_RIGHT = 5, FIRE = 6};
     
@@ -52,8 +55,23 @@ class Input
     */
     void getMousePosition(double& xPos, double& yPos);
 
+    /**
+     * @brief Set the values of array to the current state of all commands.
+     * @details array must be same length as Input::NR_OF_COMMADS
+     * 
+     * @param array the array to store the values in.
+     */
+    void getCommandsAsArray(bool* array);
+
+    /**
+     * @brief Update all commads with the values from array.
+     * @details array must be same length as Input::NR_OF_COMMADS
+     * 
+     * @param array The array contaning the values.
+     */
+    void setCommadsFromArray(bool* array);
+
   private:
-    static const int NR_OF_COMMANDS = 7;
     static const int REPEAT = 2, PRESS = 1, MOUSE_LEFT = 0;
     bool _commandStates[NR_OF_COMMANDS];
     double _xPosition = 0, _yPosition = 0;

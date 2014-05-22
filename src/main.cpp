@@ -34,6 +34,12 @@ Physics* _physics;
 Input* _input;
 
 sgct::SharedDouble _currentTime(0.0);
+sgct::SharedDouble mousePosX(0.0);
+sgct::SharedDouble mousePosY(0.0);
+sgct::SharedInt resolutionX(0);
+sgct::SharedInt resolutionY(0);
+bool commadStorage[Input::NR_OF_COMMANDS];
+sgct::SharedBool commands[Input::NR_OF_COMMANDS];
 sgct::SharedObject<glm::mat4> _sceneTransform;
 
 std::list<BulletObject*> _bullets;
@@ -105,7 +111,8 @@ void preSync()
     _currentTime.setVal(sgct::Engine::getTime());
     double xPos, yPos;
     sgct::Engine::getMousePos(_engine->getFocusedWindowIndex(), &xPos, &yPos);
-    _input->setMousePosition(xPos, yPos);
+    mousePosX.setVal(xPos);
+    mousePosY.setVal(yPos);
 
     int mousePos[2];
     int resolution[2];
@@ -113,14 +120,19 @@ void preSync()
     mousePos[1] = yPos;
     resolution[0] = _engine->getActiveXResolution();
     resolution[1] = _engine->getActiveYResolution();
-    Info::setXresolution(resolution[0]);
-    Info::setYresolution(resolution[1]);
+    resolutionX.setVal(_engine->getActiveXResolution());
+    resolutionY.setVal(_engine->getActiveYResolution());
+    
     _physics->updatePreSync(mousePos, resolution, sgct::Engine::getUserPtr()->getPos(), _engine->getDt());
     _sceneTransform.setVal(_physics->getPlayerTransform());
 
     _renderer->updatePreSync(_currentTime.getVal(), mousePos);
 
     Info::setPlayerPosition(sgct::Engine::getUserPtr()->getPos());
+
+    _input->getCommandsAsArray(commadStorage);
+    for (int i = 0; i < Input::NR_OF_COMMANDS; i++)
+      commands[i].setVal(commadStorage[i]);
   }
   
 }
@@ -128,6 +140,15 @@ void preSync()
 float cooldown = 0.2f;
 void postSyncPreDraw()
 { 
+  
+  for (int i = 0; i < Input::NR_OF_COMMANDS; i++)
+    commadStorage[i] = commands[i].getVal();
+
+  _input->setCommadsFromArray(commadStorage);
+
+  _input->setMousePosition(mousePosX.getVal(), mousePosY.getVal());
+  Info::setXresolution(resolutionX.getVal());
+  Info::setYresolution(resolutionY.getVal());
   _renderer->setTranslationTransform(_physics->getTranslationMatrix());
   _renderer->setRotationTransform(_physics->getRotationMatrix());
 
@@ -147,7 +168,7 @@ void postSyncPreDraw()
 
   }
   _physics->updatePostSync(_engine->getDt());
-  _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
+  // _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
 
   for (int i = 0; i < _physics->getNumberOfRigidBodies(); ++i)
   {
@@ -169,12 +190,25 @@ void init()
 
 void encode()
 {
-  // sgct::SharedData::instance()->writeDouble(&_currentTime);
-  // sgct::SharedData::instance()->writeObj(&_sceneTransform);
+  sgct::SharedData::instance()->writeDouble(&_currentTime);
+  sgct::SharedData::instance()->writeDouble(&mousePosX);
+  sgct::SharedData::instance()->writeDouble(&mousePosY);
+  sgct::SharedData::instance()->writeInt(&resolutionX);
+  sgct::SharedData::instance()->writeInt(&resolutionY);
+  for (int i = 0; i < Input::NR_OF_COMMANDS; i++)
+    sgct::SharedData::instance()->writeBool(&commands[i]);
+
+  sgct::SharedData::instance()->writeObj(&_sceneTransform);
 }
 
 void decode()
 {
-  // sgct::SharedData::instance()->readDouble(&_currentTime);
-  // sgct::SharedData::instance()->readObj(&_sceneTransform);
+  sgct::SharedData::instance()->readDouble(&_currentTime);
+  sgct::SharedData::instance()->readDouble(&mousePosX);
+  sgct::SharedData::instance()->readDouble(&mousePosY);
+  sgct::SharedData::instance()->readInt(&resolutionX);
+  sgct::SharedData::instance()->readInt(&resolutionY);
+  for (int i = 0; i < Input::NR_OF_COMMANDS; i++)
+    sgct::SharedData::instance()->readBool(&commands[i]);
+  sgct::SharedData::instance()->readObj(&_sceneTransform);
 }

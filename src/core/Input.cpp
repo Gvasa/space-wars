@@ -94,3 +94,15 @@ void Input::getMousePosition(double& xPos, double& yPos)
   xPos = _xPosition;
   yPos = _yPosition;
 }
+
+void Input::getCommandsAsArray(bool* array)
+{
+  for (int i = 0; i < NR_OF_COMMANDS; i++)
+    array[i] = _commandStates[i];
+}
+
+void Input::setCommadsFromArray(bool* array)
+{
+  for (int i = 0; i < NR_OF_COMMANDS; i++)
+    _commandStates[i] = array[i];
+}

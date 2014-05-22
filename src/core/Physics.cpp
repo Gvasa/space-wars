@@ -186,11 +186,12 @@ void Physics::updatePostSync(double dt)
 
   playerRigidBody->applyForce(btVector3(0, uAngular.y, 0), btVector3(playerDirection.x, playerDirection.y, playerDirection.z));
   playerRigidBody->applyForce(btVector3(0, 0, uAngular.x), btVector3(playerRight.x, playerRight.y, playerRight.z));
-  // _playerRigidBody->applyForce(btVector3(uTilt, 0, 0),4 btVector3(0,-1,0));
+  
+
 
   Info::setPlayerLinearVelocity(glm::vec3(btLinearVelocity.x(), btLinearVelocity.y(), btLinearVelocity.z()));
   Info::setPlayerAngularVelocity(glm::vec3(btAngularVelocity.x(), btAngularVelocity.y(), btAngularVelocity.z()));
-  // Info::setPlayerAngularVelocity(glm::vec3(playerDirection.x, playerDirection.y, playerDirection.z));
+  Info::setPlayerAngularVelocity(glm::vec3(playerDirection.x, playerDirection.y, playerDirection.z));
 
   _dynamicsWorld->stepSimulation(dt,10);
 }
