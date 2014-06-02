@@ -84,7 +84,19 @@ int main(int argc, char *argv[])
   _engine->setNearAndFarClippingPlanes(0.1,5000);
   std::cout << "Clipping planes: " << _engine->getNearClippingPlane() << " " << _engine->getFarClippingPlane() << std::endl;
 
+  int numberOfNodes = sgct_core::ClusterManager::instance()->getNumberOfNodes();
+  std::cout << "Number of Nodes: " << numberOfNodes << std::endl;
+  int nodeNumber = sgct_core::ClusterManager::instance()->getThisNodeId();
+  std::cout << "I am number " << nodeNumber << std::endl;
+  if ( numberOfNodes > 1){
+    if ( nodeNumber == 1)
+      _renderer->addGui();
+  }else
+  {
+    _renderer->addGui();
+  }
   
+
   _engine->render();
 
   delete _engine;

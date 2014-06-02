@@ -55,6 +55,12 @@ void Input::keyCallback(const int& key, const int& action)
       _commandStates[TILT_RIGHT] = ((action == REPEAT || action == PRESS) ? true : false); 
       break;
     }
+
+    case 'T':
+    {
+      _commandStates[RESET] = ((action == REPEAT || action == PRESS) ? true : false); 
+      break;
+    }
   }
 }
 

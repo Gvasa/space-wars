@@ -9,10 +9,10 @@ class Input
 
   public:
     //! Amount of avaliable commands.
-    static const int NR_OF_COMMANDS = 7;
+    static const int NR_OF_COMMANDS = 8;
 
     //! List of all available commands.
-    enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, TILT_LEFT = 4, TILT_RIGHT = 5, FIRE = 6};
+    enum command {FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, TILT_LEFT = 4, TILT_RIGHT = 5, FIRE = 6, RESET = 7};
     
     //! Basic constructor. 
     Input();

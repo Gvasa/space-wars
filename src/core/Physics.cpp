@@ -198,7 +198,7 @@ void Physics::updatePostSync(double dt)
 
   // std::cout << dx << " " << dy << std::endl;
   btVector3 btAngularVelocity = playerRigidBody->getAngularVelocity();
-  playerRigidBody->setAngularVelocity(btVector3(btAngularVelocity.x(), btAngularVelocity.y(), 0));
+  // playerRigidBody->setAngularVelocity(btVector3(btAngularVelocity.x(), btAngularVelocity.y(), 0));
   float gain = 10.0f;
   glm::vec3 uAngular(gain*(dx - btAngularVelocity.y()), gain*(dy - btAngularVelocity.x()), 0);
   float uTilt = gain * (_tilt - btAngularVelocity.z());
@@ -206,8 +206,52 @@ void Physics::updatePostSync(double dt)
   glm::vec4 angularUp = glm::vec4(0,0,uAngular.y,0) * _rotationMatrix;
   glm::vec4 angularRight = glm::vec4(0,0,uAngular.x,0) * _rotationMatrix;
 
+  double limit = 2.0;
+  double reset = 0;
+  if (angularUp.x > limit)
+    angularUp.x = reset;
+  if (angularUp.x < -limit)
+    angularUp.x = -reset;
+
+  if (angularUp.y > limit)
+    angularUp.y = reset;
+  if (angularUp.y < -limit)
+    angularUp.y = -reset;
+
+  if (angularUp.z > limit)
+    angularUp.z = reset;
+  if (angularUp.z < -limit)
+    angularUp.z = -reset;
+
+  std::cout << angularUp.x << " " << angularUp.y << " " << angularUp.z << std::endl;
+
   playerRigidBody->applyForce(btVector3(angularUp.x, angularUp.y, angularUp.z), btVector3(playerUp.x, playerUp.y, playerUp.z));
   
+  
+  if (angularRight.x > limit)
+    angularRight.x = reset;
+  if (angularRight.x < -limit)
+    angularRight.x = -reset;
+
+  if (angularRight.y > limit)
+    angularRight.y = reset;
+  if (angularRight.y < -limit)
+    angularRight.y = -reset;
+
+  if (angularRight.z > limit)
+    angularRight.z = reset;
+  if (angularRight.z < -limit)
+    angularRight.z = -reset;
+
+  if (angularRight.x > limit || angularRight.y > limit || angularRight.z > limit || angularUp.x > limit || angularUp.y > limit || angularUp.z > limit || 
+    angularRight.x < -limit || angularRight.y < -limit || angularRight.z < -limit || angularUp.x < -limit || angularUp.y < -limit || angularUp.z < -limit)
+  {
+    playerRigidBody->clearForces();
+    playerRigidBody->setAngularVelocity(btVector3(0,0,0));
+  }
+
+  std::cout << angularRight.x << " " << angularRight.y << " " << angularRight.z << std::endl;
+
   playerRigidBody->applyForce(btVector3(angularRight.x, angularRight.y, angularRight.z), btVector3(playerRight.x, playerRight.y, playerRight.z));
 
   Info::setPlayerLinearVelocity(glm::vec3(btLinearVelocity.x(), btLinearVelocity.y(), btLinearVelocity.z()));
@@ -219,6 +263,15 @@ void Physics::updatePostSync(double dt)
   }
 
   _dynamicsWorld->stepSimulation(dt);
+
+  if (_input->getCommandState(_input->RESET))
+  {
+    playerRigidBody->clearForces();
+    playerRigidBody->setAngularVelocity(btVector3(0,0,0));
+    playerRigidBody->setLinearVelocity(btVector3(0,0,0));
+    // std::cout << "hej" << std::endl;
+    _speed = glm::vec2(0.0f,0.0f);
+  }
 }
 
 void Physics::setGravity(float x, float y, float z)

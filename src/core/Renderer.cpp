@@ -249,6 +249,11 @@ void Renderer::initGui()
 
   _playerAngularVelocityGuiIndex = _gui->addText(50, 1060, 200, "0", "C:/Windows/Fonts/impact.ttf");
 
+  
+}
+
+void Renderer::addGui()
+{
   _root->addChild(_gui);
 }
 

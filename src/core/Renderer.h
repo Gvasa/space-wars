@@ -105,6 +105,8 @@ class Renderer
      * @brief Initilize the GUI.
      */
     void initGui();
+
+    void addGui();
   
   private:
     osgViewer::Viewer* _viewer; //!< The osg viewer connected to sgct.
