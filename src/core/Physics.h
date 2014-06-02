@@ -83,7 +83,7 @@ class Physics
     //! Adds a collision shape to the physics scene.
     void addCollisionShape(btCollisionShape* shape, glm::mat4 transform);
 
-    void addBulletObject(BulletObject* obj);
+    void addObject(GameObject* obj);
 
     //! Get transform for rigid body i.
     glm::mat4 getRigidBodyTransform(int i);

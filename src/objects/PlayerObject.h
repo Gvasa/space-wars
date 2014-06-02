@@ -10,8 +10,7 @@
 class PlayerObject : public GameObject
 {
   public:
-    PlayerObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, float mass = 1.0f);
-    ~PlayerObject();
+    PlayerObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, float mass = 10.0f);
   
 };
 

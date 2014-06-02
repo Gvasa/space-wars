@@ -20,6 +20,7 @@
 #include "objects/PlayerObject.h"
 
 
+
 void draw();
 void preSync();
 void postSyncPreDraw();
@@ -50,8 +51,8 @@ int main(int argc, char *argv[])
   AssetsLibrary::init();
   _engine = new sgct::Engine(argc, argv);
 
-  _renderer = new Renderer();
   _input = new Input();
+  _renderer = new Renderer(&_bullets);
   _physics = new Physics(_input, &_bullets);
 
   _engine->setDrawFunction(draw);
@@ -75,6 +76,7 @@ int main(int argc, char *argv[])
     delete _engine;
     return EXIT_FAILURE;
   }
+
   sgct::Engine::setMousePos(_engine->getFocusedWindowIndex(), _engine->getActiveXResolution()/2.0f, _engine->getActiveYResolution()/2.0f);
   _engine->setDisplayInfoVisibility(false);
   _engine->setMouseCursorVisibility(_engine->getFocusedWindowIndex(), false);
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
   _engine->setNearAndFarClippingPlanes(0.1,5000);
   std::cout << "Clipping planes: " << _engine->getNearClippingPlane() << " " << _engine->getFarClippingPlane() << std::endl;
 
-
+  
   _engine->render();
 
   delete _engine;
@@ -128,8 +130,6 @@ void preSync()
 
     _renderer->updatePreSync(_currentTime.getVal(), mousePos);
 
-    Info::setPlayerPosition(sgct::Engine::getUserPtr()->getPos());
-
     _input->getCommandsAsArray(commadStorage);
     for (int i = 0; i < Input::NR_OF_COMMANDS; i++)
       commands[i].setVal(commadStorage[i]);
@@ -138,9 +138,12 @@ void preSync()
 }
 
 float cooldown = 0.2f;
+bool rightGun = false;
 void postSyncPreDraw()
 { 
   
+  Info::setPlayerPosition(sgct::Engine::getUserPtr()->getPos());
+
   for (int i = 0; i < Input::NR_OF_COMMANDS; i++)
     commadStorage[i] = commands[i].getVal();
 
@@ -153,38 +156,74 @@ void postSyncPreDraw()
   _renderer->setRotationTransform(_physics->getRotationMatrix());
 
   cooldown -= _engine->getDt();
+
   if (cooldown <= 0 && _input->getCommandState(_input->FIRE))
   { 
-    cooldown = 2.0f;
+    cooldown = 0.2f;
+
+
     glm::vec4 playerDirection = glm::vec4(0,0,5,0) * _players.back()->getRotationMatrix();
-    glm::mat4 bulletTransform = _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix() * glm::translate(glm::mat4(1), glm::vec3(0,0,5));
-    _bullets.push_back(new BulletObject(AssetsLibrary::getCollisionShape(AssetsLibrary::BULLET), AssetsLibrary::getNode(AssetsLibrary::BULLET),bulletTransform , glm::vec3(10,1,1)));
-    // _dynamicsWorld->addRigidBody(_bulletList.back()->getRigidBody());
+    glm::mat4 bulletTransform;
+   
+   float ofset = 0;
+
+    if(rightGun) 
+    {
+      ofset = 2.0f;
+      rightGun = false;
+    }
+    else
+    {
+      ofset = -2.0f;
+      rightGun = true;
+    }
+
     
-    _renderer->addNodeToScene(_bullets.back()->getNode());
-    // _physics->addCollisionShape(_bullets.back()->getCollisionShape(),_players.back()->getBulletTransform());
-    // _physics->addCollisionShape(_bullets.back()->getCollisionShape(),glm::mat4(1));
-    _physics->addBulletObject(_bullets.back());
+    bulletTransform = glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z)) *  _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix();
+
+    // bulletTransform = glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z)) *  _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix()  * glm::translate( glm::mat4(1.0f), Info::getPlayerPosition());
+
+
+    // bulletTransform = glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z)) * _players.back()->getRotationMatrix() * _players.back()->getTranslationMatrix();
+
+    // bulletTransform = _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix() * glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z));
+ 
+
+    _bullets.push_back(new BulletObject(AssetsLibrary::getCollisionShape(AssetsLibrary::BULLET), AssetsLibrary::getNode(AssetsLibrary::BULLET),bulletTransform , glm::vec3(0,0,0)));
+    
+    // _renderer->addNodeToScene(_bullets.back()->getNode());
+    _renderer->addObject(_bullets.back());
+    _physics->addObject(_bullets.back());
 
   }
+
+  GameObject::updateAllObjects();
+
   _physics->updatePostSync(_engine->getDt());
-  // _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
+  _renderer->updatePostSync(_currentTime.getVal(), _engine->getCurrentFrameNumber(), _engine->getModelMatrix());
 
-  for (int i = 0; i < _physics->getNumberOfRigidBodies(); ++i)
-  {
-    _renderer->updateNode(i, _physics->getRigidBodyTransform(i));
-  }
 }
 
 void init()
 {
+  // _players.push_back(new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::FIGHTER), AssetsLibrary::getNode(AssetsLibrary::FIGHTER), glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+
+  // _renderer->addObject(_players.back());
+  // _physics->addObject(_players.back());
+
 
   _players.push_back(new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::FIGHTER), AssetsLibrary::getNode(AssetsLibrary::FIGHTER), glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.0f))));
   _physics->registerPlayerObject(_players.back());
   _renderer->registerPlayerObject(_players.back());
 
-  _renderer->addNodeToScene(AssetsLibrary::getNode(AssetsLibrary::FIGHTER));
-  _physics->addCollisionShape(AssetsLibrary::getCollisionShape(AssetsLibrary::FIGHTER), glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+  // Adding some ships and asteroids
+  // PlayerObject* as1 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 5.0f)));
+  // _physics->addObject(as1);
+  // _renderer->addObject(as1);
+
+  // PlayerObject* sh1 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::FIGHTER), AssetsLibrary::getNode(AssetsLibrary::FIGHTER), glm::rotate(glm::mat4(), 2.0f, glm::vec3(1,1,0)));
+  // _physics->addObject(sh1);
+  // _renderer->addObject(sh1);
   
 }
 
@@ -212,3 +251,4 @@ void decode()
     sgct::SharedData::instance()->readBool(&commands[i]);
   sgct::SharedData::instance()->readObj(&_sceneTransform);
 }
+  

@@ -1,5 +1,8 @@
 #include "Input.h"
 
+double Input::_xPosition = 0;
+double Input::_yPosition = 0;
+
 Input::Input()
 {
   for (int i = 0; i < NR_OF_COMMANDS; ++i)

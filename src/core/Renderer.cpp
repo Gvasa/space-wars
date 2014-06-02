@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
-Renderer::Renderer()
+Renderer::Renderer(std::list<BulletObject*>* bulletList)
+: _bulletList(bulletList)
 {
   _pixelCoords = new int[4];
   _root = new osg::Group();
@@ -37,19 +38,6 @@ Renderer::Renderer()
   _translationTransform->addChild(cell_fx.get());
   cell_fx->addChild(_sceneObjects.get());
 
-  _gui = new Gui();
-
-  _gui->addGuiObject(1920,1080,1920/2,1080/2,"assets/gui/gui_pilot.png");
-  // _gui->addGuiObject(423,360,960,900,"assets/gui/character.png");
-  _gui->addGuiObject(100,100,1920/2,1080/2,"assets/gui/crosshair.png", 0.7);
-  _gui->addText(50, 1550, 1000, "Game of Domes\nAlpha", "C:/Windows/Fonts/impact.ttf");
-
-  _playerVelocityGuiTextIndex = _gui->addText(50, 700, 200, "0", "C:/Windows/Fonts/impact.ttf");
-
-  _playerAngularVelocityGuiIndex = _gui->addText(50, 1060, 200, "0", "C:/Windows/Fonts/impact.ttf");
-
-  _root->addChild(_gui);
-
   int size = 1000;
   for(int x = -(size/2); x < (size/2); x++)
   {
@@ -69,7 +57,8 @@ Renderer::Renderer()
     gridShapesGeode->addDrawable(gridCubeDrawable);
     _sceneObjects->addChild(gridShapesGeode);
   }
-
+  
+  initGui();
   _sceneObjects->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
   tempSetUpLight();
 
@@ -131,7 +120,15 @@ void Renderer::updatePreSync(double currentTime, int* mousePos)
 
 void Renderer::updatePostSync(double currentTime, unsigned int frameNumber, glm::mat4 modelMatrix)
 {
-  _gui->update(_mouseXpos, _mouseYpos);
+  // std::cout << "Renderer::updatePostSync" << std::endl;
+  for (auto it = _bulletList->begin(); it != _bulletList->end(); it++){
+    if ((*it)->shouldBeDestroyed()) {
+      _sceneObjects->removeChild((*it)->getOsgMatrix());
+      _bulletList->erase(it);
+    }
+  }
+
+  _gui->update(Input::getMousePositionX(), Input::getMousePositionY());
 
   char buffer[50];
   int textSize = sprintf(buffer, "LIN:\nX %.2f\nY %.2f\nZ %.2f", Info::getPlayerLinearVelocity().x,
@@ -237,4 +234,25 @@ void Renderer::tempSetUpLight()
 
   _root->addChild( lightSource0 );
   _root->addChild( lightSource1 );
+}
+
+void Renderer::initGui()
+{
+   _gui = new Gui();
+
+  _gui->addGuiObject(1920,1080,1920/2,1080/2,"assets/gui/gui_pilot.png");
+  // _gui->addGuiObject(423,360,960,900,"assets/gui/character.png");
+  _gui->addGuiObject(100,100,1920/2,1080/2,"assets/gui/crosshair.png", 0.7);
+  _gui->addText(50, 1550, 1000, "Game of Domes\nAlpha", "C:/Windows/Fonts/impact.ttf");
+
+  _playerVelocityGuiTextIndex = _gui->addText(50, 700, 200, "0", "C:/Windows/Fonts/impact.ttf");
+
+  _playerAngularVelocityGuiIndex = _gui->addText(50, 1060, 200, "0", "C:/Windows/Fonts/impact.ttf");
+
+  _root->addChild(_gui);
+}
+
+void Renderer::addObject(GameObject* obj)
+{
+  _sceneObjects->addChild(obj->getOsgMatrix());
 }

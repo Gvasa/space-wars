@@ -1,16 +1,21 @@
 #include "GameObject.h"
 
-GameObject::GameObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, float mass)
-: _collisionShape(collisionShape), _node(node), _mass(mass)
+std::list<GameObject*> GameObject::_objects;
+
+GameObject::GameObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, int id, float mass)
+: _collisionShape(collisionShape), _node(node), _mass(mass), _identifier(id)
 {
   _motionState = new osgbDynamics::MotionState();
   _motionState->setParentTransform(osg::Matrix(glm::value_ptr(startTransform)));
-  _rigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(1, _motionState, _collisionShape, btVector3(1,1,1)));
+  _rigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(mass, _motionState, _collisionShape, btVector3(1,1,1)));
 
   _rigidBody->setActivationState(DISABLE_DEACTIVATION);
+  _rigidBody->setUserPointer(this);
 
   _transform = new osg::MatrixTransform();
   _transform->addChild(node);
+
+  GameObject::_objects.push_back(this);
 }
 
 GameObject::~GameObject()
@@ -59,4 +64,30 @@ glm::mat4 GameObject::getRotationMatrix()
 void GameObject::setOsgTransform(glm::mat4 transform)
 {
   _transform->setMatrix(osg::Matrix(glm::value_ptr(transform)));
+}
+
+osg::MatrixTransform* GameObject::getOsgMatrix()
+{
+  _transform->setMatrix(osg::Matrix(glm::value_ptr(glm::inverse(getBulletTransform()))));
+  return _transform.get();
+}
+
+void GameObject::update()
+{
+  _transform->setMatrix(osg::Matrix(glm::value_ptr(glm::inverse(getBulletTransform()))));
+}
+
+void GameObject::updateAllObjects()
+{
+  // std::cout << "GameObject::updateAllObjects()" << std::endl;
+  for (auto it = GameObject::_objects.begin(); it != GameObject::_objects.end(); it++)
+  {
+    if ((*it)->shouldBeDestroyed()) {
+      // delete *it;
+      GameObject::_objects.erase(it);
+    }
+    else
+      (*it)->update();
+      
+  }
 }

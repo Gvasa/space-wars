@@ -46,33 +46,64 @@ Physics::Physics(Input* input, std::list<BulletObject*>* bulletList)
   // _dynamicsWorld->addRigidBody(_planeRigidBody);<
   // _dynamicsWorld->addRigidBody(_playerRigidBody);
 
-  /*_dynamicsWorld->setInternalTickCallback([](btDynamicsWorld* world, btScalar timeStep){
+  _dynamicsWorld->setInternalTickCallback([](btDynamicsWorld* world, btScalar timeStep){
       int numOfManifolds = world->getDispatcher()->getNumManifolds();
       for (int i = 0; i < numOfManifolds; i++)
       {
         btPersistentManifold* contactManifold =  world->getDispatcher()->getManifoldByIndexInternal(i);
-         btCollisionObject* obA = const_cast<btCollisionObject*>(contactManifold->getBody0());
-         btCollisionObject* obB = const_cast<btCollisionObject*>(contactManifold->getBody1());
+        btCollisionObject* obA = const_cast<btCollisionObject*>(contactManifold->getBody0());
+        btCollisionObject* obB = const_cast<btCollisionObject*>(contactManifold->getBody1());
 
-        int numContacts = contactManifold->getNumContacts();
-        for (int j=0;j<numContacts;j++)
+        GameObject* ptrA = static_cast<GameObject*>(obA->getUserPointer());
+        GameObject* ptrB = static_cast<GameObject*>(obB->getUserPointer());
+      // std::cout << "HIT" << std::endl;
+        if (ptrA && ptrA->getIdentifier() == GameObject::BULLET)
         {
-          btManifoldPoint& pt = contactManifold->getContactPoint(j);
-          if (pt.getDistance()<0.f)
-          {
-            const btVector3& ptA = pt.getPositionWorldOnA();
-            const btVector3& ptB = pt.getPositionWorldOnB();
-            const btVector3& normalOnB = pt.m_normalWorldOnB;
-            world->removeRigidBody(obB);
-          } 
+          // std::cout << "hejA!" << std::endl;
+          world->removeRigidBody(ptrA->getRigidBody());
+          ptrA->setDestructionFlag(true);
+        }else if (ptrB && ptrB->getIdentifier() == GameObject::BULLET)
+        {
+          // std::cout << "hejB!" << std::endl;
+            world->removeRigidBody(ptrB->getRigidBody());
+            ptrB->setDestructionFlag(true);
         }
 
+
+
+        // std::cout << "Colision!" << std::endl;
+
+
+        // int numContacts = contactManifold->getNumContacts();
+        // for (int j=0;j<numContacts;j++)
+        // {
+        //   btManifoldPoint& pt = contactManifold->getContactPoint(j);
+        //   if (pt.getDistance()<0.f)
+        //   {
+        //     const btVector3& ptA = pt.getPositionWorldOnA();
+        //     const btVector3& ptB = pt.getPositionWorldOnB();
+        //     const btVector3& normalOnB = pt.m_normalWorldOnB;
+        //     // world->removeRigidBody(obB);
+        //   } 
+        // }
+
       }
-  });*/
+  });
 
   // void (Physics::*callbackPtr) (btDynamicsWorld*, btScalar);
   // callbackPtr = &Physics::tickCallback;
-  // _dynamicsWorld->setInternalTickCallback(tickCallback);
+  // GameObject* player = _player;
+  // _dynamicsWorld->setInternalTickCallback([&](btDynamicsWorld *world, btScalar timeStep){
+  //   std::cout << "hej" << std::endl;
+  //     float mMaxSpeed = 15.0f;
+  //     // btVector3 velocity = player->getRigidBody()->getLinearVelocity();
+  //     // btScalar speed = velocity.length();
+  //     // if(speed > mMaxSpeed) {
+  //     //     velocity *= mMaxSpeed/speed;
+  //     //     _player->getRigidBody()->setLinearVelocity(velocity);
+  //     // }
+
+  // });
 
 }
 
@@ -92,20 +123,6 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos,
 
 void Physics::updatePostSync(double dt)
 {
-  // btTransform playerTransform;
-  // _playerMotionState->getWorldTransform(playerTransform);
-  // btMatrix3x3 playerRotation = playerTransform.getBasis();
-  // btVector3 playerTranslation = playerTransform.getOrigin();
-  // _playerTransform = swutils::bulletTransToGlmMat4(playerTransform);
-  // std::for_each(_bulletList->begin(), _bulletList->end(), [](BulletObject* obj){
-  //   obj->getRigidBody()->applyCentralForce(btVector3(100,100,100));
-  //   // std::cout << "updating bullet" << std::endl;
-
-  // });
-
-  for (auto it = _bulletList->begin(); it != _bulletList->end(); it++){
-    (*it)->getRigidBody()->applyCentralForce(btVector3(0,0,30));
-  }
 
   _translationMatrix = _player->getTranslationMatrix();
   _rotationMatrix = _player->getRotationMatrix();
@@ -155,15 +172,16 @@ void Physics::updatePostSync(double dt)
 
   btVector3 btLinearVelocity = playerRigidBody->getLinearVelocity();
   // glm::vec2 uLinear(_speed.x - btLinearVelocity.z(), _speed.y - btLinearVelocity.x());
-  glm::vec4 playerDirection = glm::vec4(0, 0, -1, 0) * cameraTrans;
-  glm::vec4 playerUp = glm::vec4(0, 1, 0, 0) * cameraTrans;
-  glm::vec4 playerRight = glm::vec4(-1, 0, 0, 0) * cameraTrans;
+  glm::vec4 playerDirection = glm::vec4(0, 0, 1, 0) * _rotationMatrix;
+  glm::vec4 playerUp = glm::vec4(0, 1, 0, 0) * _rotationMatrix;
+  glm::vec4 playerRight = glm::vec4(-1, 0, 0, 0) * _rotationMatrix;
 
   glm::vec4 playerSpeed =  glm::normalize(glm::vec4(0, 0, 1, 0) * _rotationMatrix);
   playerSpeed *= _speed.x;
 
   glm::vec3 uLinear = glm::vec3(playerSpeed.x - btLinearVelocity.x(), playerSpeed.y - btLinearVelocity.y(), playerSpeed.z - btLinearVelocity.z());
   // glm::vec4(uLinear.y, 0, uLinear.x, 0);
+  uLinear *= 10.0f;
 
   // glm::vec4 centralForce = glm::vec4(uLinear.y, 0, uLinear.x, 0) * swutils::bulletMat3ToGlmMat4(playerRotation) ;
   playerRigidBody->applyCentralForce(btVector3(uLinear.x, uLinear.y, uLinear.z));
@@ -180,20 +198,27 @@ void Physics::updatePostSync(double dt)
 
   // std::cout << dx << " " << dy << std::endl;
   btVector3 btAngularVelocity = playerRigidBody->getAngularVelocity();
-  float gain = 5.0f;
+  playerRigidBody->setAngularVelocity(btVector3(btAngularVelocity.x(), btAngularVelocity.y(), 0));
+  float gain = 10.0f;
   glm::vec3 uAngular(gain*(dx - btAngularVelocity.y()), gain*(dy - btAngularVelocity.x()), 0);
   float uTilt = gain * (_tilt - btAngularVelocity.z());
 
-  playerRigidBody->applyForce(btVector3(0, uAngular.y, 0), btVector3(playerDirection.x, playerDirection.y, playerDirection.z));
-  playerRigidBody->applyForce(btVector3(0, 0, uAngular.x), btVector3(playerRight.x, playerRight.y, playerRight.z));
-  
+  glm::vec4 angularUp = glm::vec4(0,0,uAngular.y,0) * _rotationMatrix;
+  glm::vec4 angularRight = glm::vec4(0,0,uAngular.x,0) * _rotationMatrix;
 
+  playerRigidBody->applyForce(btVector3(angularUp.x, angularUp.y, angularUp.z), btVector3(playerUp.x, playerUp.y, playerUp.z));
+  
+  playerRigidBody->applyForce(btVector3(angularRight.x, angularRight.y, angularRight.z), btVector3(playerRight.x, playerRight.y, playerRight.z));
 
   Info::setPlayerLinearVelocity(glm::vec3(btLinearVelocity.x(), btLinearVelocity.y(), btLinearVelocity.z()));
   Info::setPlayerAngularVelocity(glm::vec3(btAngularVelocity.x(), btAngularVelocity.y(), btAngularVelocity.z()));
-  Info::setPlayerAngularVelocity(glm::vec3(playerDirection.x, playerDirection.y, playerDirection.z));
+  // Info::setPlayerAngularVelocity(glm::vec3(playerUp.x, playerUp.y, playerUp.z));
 
-  _dynamicsWorld->stepSimulation(dt,10);
+  for (auto it = _bulletList->begin(); it != _bulletList->end(); it++){
+    (*it)->getRigidBody()->applyCentralForce(btVector3(playerDirection.x,playerDirection.y,playerDirection.z));
+  }
+
+  _dynamicsWorld->stepSimulation(dt);
 }
 
 void Physics::setGravity(float x, float y, float z)
@@ -233,12 +258,12 @@ void Physics::addCollisionShape(btCollisionShape* shape, glm::mat4 transform)
   // _dynamicsWorld->contactPairTest(_rigidBodies.back(), _playerRigidBody, _collisionCallback);
 }
 
-void Physics::addBulletObject(BulletObject* obj)
+void Physics::addObject(GameObject* obj)
 {
   _dynamicsWorld->addRigidBody(obj->getRigidBody());
-  _motionStates.push_back(obj->getMotionState());
-  _collisionShapes.push_back(obj->getCollisionShape());
-  _rigidBodies.push_back(obj->getRigidBody());
+  // _motionStates.push_back(obj->getMotionState());
+  // _collisionShapes.push_back(obj->getCollisionShape());
+  // _rigidBodies.push_back(obj->getRigidBody());
 }
 
 glm::mat4 Physics::getRigidBodyTransform(int i)

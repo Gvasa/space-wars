@@ -9,8 +9,7 @@
 class BulletObject : public GameObject
 {
   public:
-    BulletObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, glm::vec3 velocity, float mass = 1.0f);
-    ~BulletObject();
+    BulletObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, glm::vec3 velocity, float mass = 0.005f);
     
 };
 

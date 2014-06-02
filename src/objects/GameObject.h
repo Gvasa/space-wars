@@ -2,6 +2,7 @@
 #define GAMEOBJECT_H
 
 #include <iostream>
+#include <list>
 
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btCollisionWorld.h>
@@ -41,7 +42,7 @@ class GameObject
      * @param startTransform Transform that decides the start position and orientation of the object.
      * @param  mass The mass of the object.
      */
-    GameObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, float mass = 1.0f);
+    GameObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, int id, float mass = 1.0f);
 
     ~GameObject();
 
@@ -92,7 +93,47 @@ class GameObject
       return _node.get();
     }
 
+    osg::MatrixTransform* getOsgMatrix();
+
+    /**
+     * @brief Get the identifier of this objects.
+     * @return What kind of object this is.
+     */
+    int getIdentifier() {
+      return _identifier;
+    }
+
+    /**
+     * @brief Flags if the object should be destroyed.
+     * @details Same as getDestructionFlag()
+     */
+    bool shouldBeDestroyed() {
+      return _shouldBeDestroyed;
+    }
+
+    /**
+     * @brief Flags if the object should be destroyed.
+     * @details Sama as shouldBeDestroyed.
+     */
+    bool getDestructionFlag() {
+      return _shouldBeDestroyed;
+    }
+
+    /**
+     * @brief Flag the object to be destroyed.
+     * @details Used be physics and renderer to find out if an object needs to be removed.
+     */
+    void setDestructionFlag(bool flag) {
+      _shouldBeDestroyed = flag;
+    }
+
+    void update();
+
+    static void updateAllObjects();
+
   protected:
+    int _identifier = 0;
+    bool _shouldBeDestroyed = false;
     btCollisionShape* _collisionShape;
     osgbDynamics::MotionState* _motionState;
     btRigidBody* _rigidBody;
@@ -101,5 +142,8 @@ class GameObject
     osg::ref_ptr<osg::Node> _node;
 
     float _mass;
+
+    static std::list<GameObject*> _objects;
+
 };
 #endif

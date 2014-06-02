@@ -32,7 +32,7 @@ class Input
     */
     void mouseCallback(const int& key, const int& action);
     //! Updates the mouse position. Not currently used.
-    void setMousePosition(const double& xPos, const double& yPos);
+    static void setMousePosition(const double& xPos, const double& yPos);
     
     //! Checks if the specified command is active or not.
     /*!
@@ -43,17 +43,17 @@ class Input
     /*!
         \return The position of the mouse along the x-axis.
     */
-    double getMousePositionX();
+    static double getMousePositionX();
     /*!
         \return The position of the mouse along the y-axis.
     */
-    double getMousePositionY();
+    static double getMousePositionY();
     //! Gives the mouse position along the x- and y-axis using two pass-by-reference arguments.
     /*!
         \param xPos Stores the position of the mouse along the x-axis.
         \param yPos Stores the position of the mouse along the y-axis.
     */
-    void getMousePosition(double& xPos, double& yPos);
+    static void getMousePosition(double& xPos, double& yPos);
 
     /**
      * @brief Set the values of array to the current state of all commands.
@@ -74,7 +74,7 @@ class Input
   private:
     static const int REPEAT = 2, PRESS = 1, MOUSE_LEFT = 0;
     bool _commandStates[NR_OF_COMMANDS];
-    double _xPosition = 0, _yPosition = 0;
+    static double _xPosition, _yPosition;
 };
 
 #endif

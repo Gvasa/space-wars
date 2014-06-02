@@ -25,7 +25,9 @@
 
 #include "Gui.h"
 #include "Info.h"
+#include "Input.h"
 #include "objects/GameObject.h"
+#include "objects/BulletObject.h"
 
 //! Handles the games scene graph.
 /*!
@@ -36,7 +38,7 @@ class Renderer
 {
   public:
     //! Constructor that initializes the OSG-viewer and creates the root node.
-    Renderer();
+    Renderer(std::list<BulletObject*>* bulletList);
 
     //! Basic destructor that removes dynamically allocated resources.
     ~Renderer();
@@ -96,6 +98,13 @@ class Renderer
     void registerPlayerObject(GameObject* player) {
         _player = player;
     }
+
+    void addObject(GameObject* obj);
+
+    /**
+     * @brief Initilize the GUI.
+     */
+    void initGui();
   
   private:
     osgViewer::Viewer* _viewer; //!< The osg viewer connected to sgct.
@@ -122,6 +131,7 @@ class Renderer
     osg::ref_ptr<osg::MatrixTransform> _translationTransform;
 
     GameObject* _player;
+    std::list<BulletObject*>* _bulletList;
 };
 
 #endif
