@@ -13,6 +13,7 @@ void AssetsLibrary::init()
   addModel("assets/models/fighter_material.obj");
   addModel("assets/models/pewpew.obj");
   addModel("assets/models/asteroid.obj");
+  addModel("assets/models/mothership.obj");
 }
 
 void AssetsLibrary::addModel(std::string fileName)

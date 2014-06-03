@@ -235,26 +235,29 @@ void init()
   _renderer->registerPlayerObject(_players.back());
 
   // Adding some ships and asteroids
-  PlayerObject* as1 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 20.0f)));
+  PlayerObject* as1 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(10.0f, -15.0f, 20.0f)));
   _physics->addObject(as1);
   _renderer->addObject(as1);
 
-  PlayerObject* as2 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(12.0f,5.0f, 19.0f)));
+  PlayerObject* as2 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(12.0f, -20.0f, 19.0f)));
   _physics->addObject(as2);
   _renderer->addObject(as2);
 
-  PlayerObject* as3 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(9.0f, -1.0f, 22.0f)));
+  PlayerObject* as3 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(9.0f, -6.0f, 22.0f)));
   _physics->addObject(as3);
   _renderer->addObject(as3);
 
-  PlayerObject* as4 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(7.0f, 2.0f, 15.0f)));
+  PlayerObject* as4 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::ASTEROID), AssetsLibrary::getNode(AssetsLibrary::ASTEROID), glm::translate( glm::mat4(1.0f), glm::vec3(7.0f, -13.0f, 15.0f)));
   _physics->addObject(as4);
   _renderer->addObject(as4);
 
+  PlayerObject* ms1 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::MOTHERSHIP), AssetsLibrary::getNode(AssetsLibrary::MOTHERSHIP), glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, -15.0f, 15.0f)));
+  _physics->addObject(ms1);
+  _renderer->addObject(ms1);
 
-  glm::mat4 hej =  glm::rotate(glm::mat4(1), 1.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-  PlayerObject* sh1 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::FIGHTER), AssetsLibrary::getNode(AssetsLibrary::FIGHTER), glm::translate( glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 20.0f)) * hej);
+
+  PlayerObject* sh1 = new PlayerObject(AssetsLibrary::getCollisionShape(AssetsLibrary::FIGHTER), AssetsLibrary::getNode(AssetsLibrary::FIGHTER), glm::translate( glm::mat4(1.0f), glm::vec3(-10.0f, -15.0f, 20.0f)));
   _physics->addObject(sh1);
   _renderer->addObject(sh1);
 

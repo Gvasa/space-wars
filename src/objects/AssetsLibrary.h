@@ -25,7 +25,8 @@ class AssetsLibrary
     {
       FIGHTER = 0,
       BULLET = 1,
-      ASTEROID = 2
+      ASTEROID = 2,
+      MOTHERSHIP = 3
     };
 
     AssetsLibrary();
