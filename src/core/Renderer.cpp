@@ -94,6 +94,24 @@ void Renderer::setUpSkyBox()
 
   _rotationTransform->addChild(skyNode.get());
 
+ //  osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+
+ // geode->addDrawable( new osg::ShapeDrawable(
+ //       new osg::Sphere(osg::Vec3(), 5.0f)) );
+ 
+ //  osg::ref_ptr<SkyBox> skybox = new SkyBox;
+ //  skybox->getOrCreateStateSet()->setTextureAttributeAndModes( 0, new osg::TexGen );
+ //  // skybox->setEnvironmentMap( 0,
+ //  //      osgDB::readImageFile("BlueChecker.png"), osgDB::readImageFile("OrangeChecker.png"),
+ //  //      osgDB::readImageFile("GreenChecker.png"), osgDB::readImageFile("YellowChecker.png"),
+ //  //      osgDB::readImageFile("RedChecker.png"), osgDB::readImageFile("PurpleChecker.png") );
+ //  skybox->setEnvironmentMap( 0,
+ //       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+ //       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png"),
+ //       osgDB::readImageFile("stars.png"), osgDB::readImageFile("stars.png") );
+ //  skybox->addChild( geode );
+ //  _sceneObjects->addChild( skybox );
+ 
 }
 
 Renderer::~Renderer()
@@ -240,7 +258,7 @@ void Renderer::initGui()
 {
    _gui = new Gui();
 
-  _gui->addGuiObject(1920,1080,1920/2,1080/2,"assets/gui/gui_pilot.png");
+  _gui->addGuiObject(1920,1080,1920/2,1080/2,"assets/gui/gui_s.png");
   // _gui->addGuiObject(423,360,960,900,"assets/gui/character.png");
   _gui->addGuiObject(100,100,1920/2,1080/2,"assets/gui/crosshair.png", 0.7);
   _gui->addText(50, 1550, 1000, "Game of Domes\nAlpha", "C:/Windows/Fonts/impact.ttf");

@@ -11,14 +11,14 @@ GameObject::GameObject(btCollisionShape* collisionShape, osg::Node* node, glm::m
   _rigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(mass, _motionState, _collisionShape, btVector3(1,1,1)));
 
   _rigidBody->setActivationState(DISABLE_DEACTIVATION);
-  // _rigidBody->setUserPointer(this);
 
   _transform = new osg::MatrixTransform();
   _transform->addChild(node);
 
   GameObject::_objects.push_back(this);
+  _rigidBody->setUserPointer(this);
 
-  std::cout << "new object" << std::endl;
+  // std::cout << "new object" << std::endl;
 }
 
 GameObject::~GameObject()

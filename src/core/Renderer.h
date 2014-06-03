@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <stdio.h>
+#include <string>
 
 #include "sgct.h"
 #include <glm/glm.hpp>
@@ -28,6 +29,7 @@
 #include "Input.h"
 #include "objects/GameObject.h"
 #include "objects/BulletObject.h"
+#include "core/skybox.h"
 
 //! Handles the games scene graph.
 /*!

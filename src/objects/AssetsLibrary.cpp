@@ -11,7 +11,7 @@ AssetsLibrary::AssetsLibrary()
 void AssetsLibrary::init()
 {
   addModel("assets/models/fighter_material.obj");
-  addModel("assets/models/pew.obj");
+  addModel("assets/models/pewpew.obj");
   addModel("assets/models/asteroid.obj");
 }
 

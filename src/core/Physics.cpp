@@ -56,16 +56,16 @@ Physics::Physics(Input* input, std::list<BulletObject*>* bulletList)
 
       //   GameObject* ptrA = static_cast<GameObject*>(obA->getUserPointer());
       //   GameObject* ptrB = static_cast<GameObject*>(obB->getUserPointer());
-      // // std::cout << "HIT" << std::endl;
+      // // // std::cout << "HIT" << std::endl;
       //   if (ptrA && ptrA->getIdentifier() == GameObject::BULLET)
       //   {
-      //     // std::cout << "hejA!" << std::endl;
-      //     world->removeRigidBody(ptrA->getRigidBody());
+      //     std::cout << "hejA!" << std::endl;
+      //     // world->removeRigidBody(ptrA->getRigidBody());
       //     ptrA->setDestructionFlag(true);
       //   }else if (ptrB && ptrB->getIdentifier() == GameObject::BULLET)
       //   {
-      //     // std::cout << "hejB!" << std::endl;
-      //       world->removeRigidBody(ptrB->getRigidBody());
+      //     std::cout << "hejB!" << std::endl;
+      //       // world->removeRigidBody(ptrB->getRigidBody());
       //       ptrB->setDestructionFlag(true);
       //   }
 
@@ -123,6 +123,11 @@ void Physics::updatePreSync(int* mousePos, int* resolution, glm::vec3 playerPos,
 
 void Physics::updatePostSync(double dt)
 {
+  for (auto it = _bulletList->begin(); it != _bulletList->end(); it++){
+    if ((*it)->shouldBeDestroyed()) {
+      _dynamicsWorld->removeRigidBody((*it)->getRigidBody());
+    }
+  }
 
   _translationMatrix = _player->getTranslationMatrix();
   _rotationMatrix = _player->getRotationMatrix();
