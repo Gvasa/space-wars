@@ -127,9 +127,17 @@ class GameObject
       _shouldBeDestroyed = flag;
     }
 
+    glm::mat4 getStartTransform() {
+        return _startTransform;
+    }
+
     void update();
 
     static void updateAllObjects();
+
+    static int getNumberOfObjects() {
+        return _objects.size();
+    }
 
   protected:
     int _identifier = 0;
@@ -144,6 +152,8 @@ class GameObject
     float _mass;
 
     static std::list<GameObject*> _objects;
+
+    glm::mat4 _startTransform;
 
 };
 #endif

@@ -54,20 +54,20 @@ Physics::Physics(Input* input, std::list<BulletObject*>* bulletList)
         btCollisionObject* obA = const_cast<btCollisionObject*>(contactManifold->getBody0());
         btCollisionObject* obB = const_cast<btCollisionObject*>(contactManifold->getBody1());
 
-        GameObject* ptrA = static_cast<GameObject*>(obA->getUserPointer());
-        GameObject* ptrB = static_cast<GameObject*>(obB->getUserPointer());
-      // std::cout << "HIT" << std::endl;
-        if (ptrA && ptrA->getIdentifier() == GameObject::BULLET)
-        {
-          // std::cout << "hejA!" << std::endl;
-          world->removeRigidBody(ptrA->getRigidBody());
-          ptrA->setDestructionFlag(true);
-        }else if (ptrB && ptrB->getIdentifier() == GameObject::BULLET)
-        {
-          // std::cout << "hejB!" << std::endl;
-            world->removeRigidBody(ptrB->getRigidBody());
-            ptrB->setDestructionFlag(true);
-        }
+      //   GameObject* ptrA = static_cast<GameObject*>(obA->getUserPointer());
+      //   GameObject* ptrB = static_cast<GameObject*>(obB->getUserPointer());
+      // // std::cout << "HIT" << std::endl;
+      //   if (ptrA && ptrA->getIdentifier() == GameObject::BULLET)
+      //   {
+      //     // std::cout << "hejA!" << std::endl;
+      //     world->removeRigidBody(ptrA->getRigidBody());
+      //     ptrA->setDestructionFlag(true);
+      //   }else if (ptrB && ptrB->getIdentifier() == GameObject::BULLET)
+      //   {
+      //     // std::cout << "hejB!" << std::endl;
+      //       world->removeRigidBody(ptrB->getRigidBody());
+      //       ptrB->setDestructionFlag(true);
+      //   }
 
 
 
@@ -206,7 +206,7 @@ void Physics::updatePostSync(double dt)
   glm::vec4 angularUp = glm::vec4(0,0,uAngular.y,0) * _rotationMatrix;
   glm::vec4 angularRight = glm::vec4(0,0,uAngular.x,0) * _rotationMatrix;
 
-  double limit = 2.0;
+  double limit = 5.0;
   double reset = 0;
   if (angularUp.x > limit)
     angularUp.x = reset;
@@ -222,8 +222,6 @@ void Physics::updatePostSync(double dt)
     angularUp.z = reset;
   if (angularUp.z < -limit)
     angularUp.z = -reset;
-
-  std::cout << angularUp.x << " " << angularUp.y << " " << angularUp.z << std::endl;
 
   playerRigidBody->applyForce(btVector3(angularUp.x, angularUp.y, angularUp.z), btVector3(playerUp.x, playerUp.y, playerUp.z));
   
@@ -246,11 +244,14 @@ void Physics::updatePostSync(double dt)
   if (angularRight.x > limit || angularRight.y > limit || angularRight.z > limit || angularUp.x > limit || angularUp.y > limit || angularUp.z > limit || 
     angularRight.x < -limit || angularRight.y < -limit || angularRight.z < -limit || angularUp.x < -limit || angularUp.y < -limit || angularUp.z < -limit)
   {
+    _dynamicsWorld->removeRigidBody(playerRigidBody);
     playerRigidBody->clearForces();
     playerRigidBody->setAngularVelocity(btVector3(0,0,0));
+    playerRigidBody->setLinearVelocity(btVector3(0,0,0));
+    _speed = glm::vec2(0.0f,0.0f);
+    playerRigidBody->setWorldTransform(swutils::glmMat4ToBullletTranform(_player->getStartTransform()));
+    _dynamicsWorld->addRigidBody(playerRigidBody);
   }
-
-  std::cout << angularRight.x << " " << angularRight.y << " " << angularRight.z << std::endl;
 
   playerRigidBody->applyForce(btVector3(angularRight.x, angularRight.y, angularRight.z), btVector3(playerRight.x, playerRight.y, playerRight.z));
 
@@ -266,11 +267,13 @@ void Physics::updatePostSync(double dt)
 
   if (_input->getCommandState(_input->RESET))
   {
+    _dynamicsWorld->removeRigidBody(playerRigidBody);
     playerRigidBody->clearForces();
     playerRigidBody->setAngularVelocity(btVector3(0,0,0));
     playerRigidBody->setLinearVelocity(btVector3(0,0,0));
-    // std::cout << "hej" << std::endl;
     _speed = glm::vec2(0.0f,0.0f);
+    playerRigidBody->setWorldTransform(swutils::glmMat4ToBullletTranform(_player->getStartTransform()));
+    _dynamicsWorld->addRigidBody(playerRigidBody);
   }
 }
 

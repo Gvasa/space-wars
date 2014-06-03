@@ -171,6 +171,7 @@ void postSyncPreDraw()
 
   if (cooldown <= 0 && _input->getCommandState(_input->FIRE))
   { 
+    std::cout << "---------------------" << std::endl;
     cooldown = 0.2f;
 
 
@@ -190,22 +191,30 @@ void postSyncPreDraw()
       rightGun = true;
     }
 
+    glm::vec3 playerPos = Info::getPlayerPosition();
+
+    // bulletTransform = glm::translate(glm::mat4(1), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z)) *  _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix();
+
     
-    bulletTransform = glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z)) *  _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix();
+    bulletTransform =  glm::translate(glm::mat4(1), glm::vec3(ofset, 0.5, 5))* _players.back()->getRotationMatrix() * glm::translate( glm::mat4(1.0f), playerPos) * _players.back()->getTranslationMatrix();
+    bulletTransform = glm::transpose(bulletTransform);
+    // _players.back()->getTranslationMatrix() * glm::translate( glm::mat4(1.0f), playerPos);
 
-    // bulletTransform = glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z)) *  _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix()  * glm::translate( glm::mat4(1.0f), Info::getPlayerPosition());
+  
+    // std::cout << "Determinatn: "  << glm::determinant(bulletTransform) << std::endl;
+    // swutils::printMat4(bulletTransform);
+    BulletObject* hej = new BulletObject(AssetsLibrary::getCollisionShape(AssetsLibrary::BULLET), AssetsLibrary::getNode(AssetsLibrary::BULLET),bulletTransform , glm::vec3(0,0,0));
 
+   std::cout << "Number of obejcts" << GameObject::getNumberOfObjects() << std::endl;
+    _bullets.push_back(hej); 
 
-    // bulletTransform = glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z)) * _players.back()->getRotationMatrix() * _players.back()->getTranslationMatrix();
-
-    // bulletTransform = _players.back()->getTranslationMatrix() * _players.back()->getRotationMatrix() * glm::translate(glm::mat4(), glm::vec3(playerDirection.x+ofset, playerDirection.y+0.5, playerDirection.z));
- 
-
-    _bullets.push_back(new BulletObject(AssetsLibrary::getCollisionShape(AssetsLibrary::BULLET), AssetsLibrary::getNode(AssetsLibrary::BULLET),bulletTransform , glm::vec3(0,0,0)));
+    
     
     // _renderer->addNodeToScene(_bullets.back()->getNode());
     _renderer->addObject(_bullets.back());
     _physics->addObject(_bullets.back());
+
+    std::cout << "---------------------" << std::endl;
 
   }
 

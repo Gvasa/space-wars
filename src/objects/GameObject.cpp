@@ -3,19 +3,22 @@
 std::list<GameObject*> GameObject::_objects;
 
 GameObject::GameObject(btCollisionShape* collisionShape, osg::Node* node, glm::mat4 startTransform, int id, float mass)
-: _collisionShape(collisionShape), _node(node), _mass(mass), _identifier(id)
+: _collisionShape(collisionShape), _node(node), _mass(mass), _identifier(id), _startTransform(startTransform)
 {
   _motionState = new osgbDynamics::MotionState();
-  _motionState->setParentTransform(osg::Matrix(glm::value_ptr(startTransform)));
+  // // _motionState->setParentTransform(osg::Matrix(glm::value_ptr(startTransform)));
+  _motionState->setWorldTransform(swutils::glmMat4ToBullletTranform(startTransform));
   _rigidBody = new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(mass, _motionState, _collisionShape, btVector3(1,1,1)));
 
   _rigidBody->setActivationState(DISABLE_DEACTIVATION);
-  _rigidBody->setUserPointer(this);
+  // _rigidBody->setUserPointer(this);
 
   _transform = new osg::MatrixTransform();
   _transform->addChild(node);
 
   GameObject::_objects.push_back(this);
+
+  std::cout << "new object" << std::endl;
 }
 
 GameObject::~GameObject()

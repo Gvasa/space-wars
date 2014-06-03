@@ -2,6 +2,7 @@
 #define SWUTILS_H
 
 #include <string>
+#include <iostream>
 
 #include <btBulletDynamicsCommon.h>
 #include <osg/MatrixTransform>
@@ -46,6 +47,9 @@ namespace swutils
      */
     std::string glmVec2PtrToString(glm::vec2* v);
 
+    btTransform glmMat4ToBullletTranform(glm::mat4 m);
+
+    void printMat4(glm::mat4 m);
 }
 
 #endif
